@@ -26,7 +26,6 @@ group = "com.baulsupp"
 val artifactID = "cooee-cli"
 description = "Coo.ee CLI"
 val projectVersion = versioning.info.display!!
-println("Version $projectVersion")
 version = projectVersion
 
 application {
@@ -48,9 +47,11 @@ tasks {
 }
 
 dependencies {
+  implementation(Deps.airline2)
   implementation(Deps.coroutinesCore)
   implementation(Deps.kotlinReflect)
   implementation(Deps.kotlinStandardLibrary)
+  implementation(Deps.oksocialOutput)
 
   testImplementation(Deps.kotlinTest)
   testImplementation(Deps.kotlinTestJunit)

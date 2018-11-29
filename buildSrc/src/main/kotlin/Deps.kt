@@ -6,6 +6,7 @@ object Versions {
 }
 
 object Deps {
+  val airline2 = "com.github.rvesse:airline:2.6.0"
   val activation = "javax.activation:activation:1.1.1"
   val byteunits = "com.jakewharton.byteunits:byteunits:0.9.1"
   val coroutinesCore = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}"
@@ -23,6 +24,7 @@ object Deps {
   val kotlinTest = "org.jetbrains.kotlin:kotlin-test:${Versions.kotlin}"
   val kotlinTestJunit = "org.jetbrains.kotlin:kotlin-test-junit:${Versions.kotlin}"
   val okio = "com.squareup.okio:okio:2.1.0"
+  val oksocialOutput = "com.baulsupp:oksocial-output:4.25.0"
   val slf4jApi = "org.slf4j:slf4j-api:1.8.0-beta2"
   val slf4jJdk14 = "org.slf4j:slf4j-jdk14:1.8.0-beta2"
   val svgSalamander = "com.kitfox.svg:svg-salamander:1.0"
