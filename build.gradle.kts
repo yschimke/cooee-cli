@@ -20,6 +20,7 @@ repositories {
   maven(url = "https://jitpack.io")
   maven(url = "http://repo.maven.apache.org/maven2")
   maven(url = "https://dl.bintray.com/kotlin/kotlin-eap/")
+  maven(url = "https://dl.bintray.com/yschimke/baulsupp.com/")
 }
 
 group = "com.baulsupp"
@@ -51,7 +52,9 @@ dependencies {
   implementation(Deps.coroutinesCore)
   implementation(Deps.kotlinReflect)
   implementation(Deps.kotlinStandardLibrary)
+  implementation(Deps.okurl)
   implementation(Deps.oksocialOutput)
+  implementation(Deps.okhttp)
 
   testImplementation(Deps.kotlinTest)
   testImplementation(Deps.kotlinTestJunit)

@@ -1,5 +1,9 @@
 package com.baulsupp.cooee.cli
 
+import com.baulsupp.oksocial.output.ConsoleHandler
+import com.baulsupp.oksocial.output.OutputHandler
+import com.baulsupp.oksocial.output.UsageException
+import com.baulsupp.okurl.kotlin.query
 import com.github.rvesse.airline.HelpOption
 import com.github.rvesse.airline.SingleCommand
 import com.github.rvesse.airline.annotations.Arguments
@@ -7,7 +11,12 @@ import com.github.rvesse.airline.annotations.Command
 import com.github.rvesse.airline.annotations.Option
 import com.github.rvesse.airline.help.Help
 import com.github.rvesse.airline.parser.errors.ParseException
+import okhttp3.OkHttpClient
+import okhttp3.Response
+import java.io.Closeable
 import java.util.ArrayList
+import java.util.logging.Level
+import java.util.logging.Logger
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
@@ -21,20 +30,94 @@ class Main {
   @Inject
   var help: HelpOption<Main>? = null
 
-  @Option(name = ["-H", "--header"], description = "Custom header to pass to server")
-  var headers: List<String>? = null
+  @Option(name = ["-V", "--version"], description = "Show version number and quit")
+  var version = false
 
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
-  fun run(): Int {
+  lateinit var client: OkHttpClient
+
+  lateinit var outputHandler: OutputHandler<Response>
+
+  val closeables = mutableListOf<Closeable>()
+
+  open fun initialise() {
+    System.setProperty("apple.awt.UIElement", "true")
+
+    if (!this::outputHandler.isInitialized) {
+      outputHandler = buildHandler()
+    }
+
+    closeables.add(Closeable {
+      if (this::client.isInitialized) {
+        client.dispatcher().executorService().shutdown()
+        client.connectionPool().evictAll()
+      }
+    })
+
+    if (!this::client.isInitialized) {
+      val clientBuilder = createClientBuilder()
+
+      client = clientBuilder.build()
+    }
+  }
+
+  open fun buildHandler(): OutputHandler<Response> {
+    return ConsoleHandler.instance()
+  }
+
+  private fun createClientBuilder(): OkHttpClient.Builder {
+    val builder = OkHttpClient.Builder()
+
+    return builder
+  }
+
+  open suspend fun runCommand(runArguments: List<String>): Int {
+    val result = client.query<GoResult>("https://coo.ee/goinfo?q=" + runArguments.joinToString(" "))
+
+    outputHandler.openLink(result.location)
+
+    return 0
+  }
+
+  fun versionString(): String {
+    return this.javaClass.`package`.implementationVersion ?: "dev"
+  }
+
+  suspend fun run(): Int {
     if (help?.showHelpIfRequested() == true) {
       return 0
     }
 
-    println(arguments)
+    initialise()
 
-    return 0
+    if (version) {
+      outputHandler.info("cooee-cli " + versionString())
+      return 0
+    }
+
+    return try {
+      runCommand(arguments)
+    } catch (e: UsageException) {
+      outputHandler.showError(e.message)
+      -1
+    } catch (e: Exception) {
+      outputHandler.showError("unknown error", e)
+      -2
+    } finally {
+      closeClients()
+    }
+  }
+
+  private fun closeClients() {
+    for (c in closeables) {
+      try {
+        c.close()
+      } catch (e: Exception) {
+        Logger.getLogger("main").log(Level.FINE, "close failed", e)
+      }
+    }
   }
 }
 

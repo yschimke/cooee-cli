@@ -3,6 +3,9 @@ object Versions {
   val junit = "5.3.2"
   val kotlin = "1.3.10"
   val kotlinCoroutines = "1.0.1"
+  val okurl = "1.66.0"
+  val oksocialOutput = "4.25.0"
+  val okhttp = "3.12.0"
 }
 
 object Deps {
@@ -24,7 +27,9 @@ object Deps {
   val kotlinTest = "org.jetbrains.kotlin:kotlin-test:${Versions.kotlin}"
   val kotlinTestJunit = "org.jetbrains.kotlin:kotlin-test-junit:${Versions.kotlin}"
   val okio = "com.squareup.okio:okio:2.1.0"
-  val oksocialOutput = "com.baulsupp:oksocial-output:4.25.0"
+  val okhttp = "com.squareup.okhttp3:okhttp:${Versions.okhttp}"
+  val oksocialOutput = "com.baulsupp:oksocial-output:${Versions.oksocialOutput}"
+  val okurl = "com.baulsupp:okurl:${Versions.okurl}"
   val slf4jApi = "org.slf4j:slf4j-api:1.8.0-beta2"
   val slf4jJdk14 = "org.slf4j:slf4j-jdk14:1.8.0-beta2"
   val svgSalamander = "com.kitfox.svg:svg-salamander:1.0"
