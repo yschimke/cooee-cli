@@ -33,6 +33,9 @@ class Main {
   @Option(name = ["-V", "--version"], description = "Show version number and quit")
   var version = false
 
+  @Option(name = ["-l", "--local"], description = "Use local server")
+  var local = false
+
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
@@ -74,7 +77,8 @@ class Main {
   }
 
   open suspend fun runCommand(runArguments: List<String>): Int {
-    val result = client.query<GoResult>("https://coo.ee/goinfo?q=" + runArguments.joinToString(" "))
+    val host = if (local) "http://localhost:8080" else "https://coo.ee"
+    val result = client.query<GoResult>("$host/api/v0/goinfo?q=" + runArguments.joinToString(" "))
 
     outputHandler.openLink(result.location)
 
