@@ -80,9 +80,13 @@ class Main {
     val host = if (local) "http://localhost:8080" else "https://coo.ee"
     val result = client.query<GoResult>("$host/api/v0/goinfo?q=" + runArguments.joinToString(" "))
 
-    outputHandler.openLink(result.location)
-
-    return 0
+    if (result.location != null) {
+      outputHandler.openLink(result.location)
+      return 0
+    } else {
+      outputHandler.showError("No results found")
+      return -1
+    }
   }
 
   fun versionString(): String {
