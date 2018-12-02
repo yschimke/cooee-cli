@@ -47,6 +47,18 @@ tasks {
   }
 }
 
+tasks.create("downloadDependencies") {
+  description = "Downloads dependencies"
+
+  doLast {
+    configurations.forEach {
+      if (it.isCanBeResolved) {
+        it.resolve()
+      }
+    }
+  }
+}
+
 dependencies {
   implementation(Deps.airline2)
   implementation(Deps.coroutinesCore)
