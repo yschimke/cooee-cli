@@ -3,7 +3,9 @@ package com.baulsupp.cooee.cli
 import com.baulsupp.oksocial.output.ConsoleHandler
 import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
+import com.baulsupp.oksocial.output.systemOut
 import com.baulsupp.okurl.kotlin.query
+import com.baulsupp.okurl.util.LoggingUtil.Companion.configureLogging
 import com.github.rvesse.airline.HelpOption
 import com.github.rvesse.airline.SingleCommand
 import com.github.rvesse.airline.annotations.Arguments
@@ -41,6 +43,9 @@ class Main {
   @Option(name = ["--command-complete"], description = "Complete Command")
   var commandComplete: Boolean = false
 
+  @Option(name = ["--debug"], description = "Debug Output")
+  var debug: Boolean = false
+
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
@@ -76,14 +81,25 @@ class Main {
     try {
       val completionList: List<String> = buildCompletions(arguments)
       outputHandler.info(completionList.joinToString("\n"))
+    } catch (ue: UsageException) {
+      throw ue
     } catch (e: Exception) {
       logger.log(Level.FINE, "failure during url completion", e)
     }
   }
 
-  private fun buildCompletions(arguments: List<String>): List<String> {
-    // TODO real list
-    return listOf(arguments.last(), arguments.last() + "-1234", "TRANS", "TRANS-1234")
+  private suspend fun buildCompletions(arguments: List<String>): List<String> {
+    val line = arguments.getOrElse(0) { "" }
+    val current = arguments.getOrNull(1)
+    val editPos = arguments.getOrNull(2)?.toInt() ?: line.length
+
+    val parts = line.split(" ")
+
+    return if (parts.size > 1) {
+      argumentCompletionQuery(line).completions
+    } else {
+      commandCompletionQuery(parts.getOrElse(0) { "" }).completions
+    }
   }
 
   private fun printVersion() {
@@ -91,7 +107,7 @@ class Main {
   }
 
   private fun name(): String {
-    return "cooee-cli"
+    return "cooee"
   }
 
   private fun completeOption(complete: String) {
@@ -130,8 +146,7 @@ class Main {
   }
 
   private suspend fun cooeeCommand(runArguments: List<String>): Int {
-    val host = if (local) "http://localhost:8080" else "https://coo.ee"
-    val result = client.query<GoResult>("$host/api/v0/goinfo?q=" + runArguments.joinToString(" "))
+    val result = bounceQuery(runArguments)
 
     if (result.location != null) {
       outputHandler.openLink(result.location)
@@ -142,6 +157,17 @@ class Main {
     }
   }
 
+  private suspend fun bounceQuery(runArguments: List<String>) =
+    client.query<GoResult>("${host()}/api/v0/goinfo?q=${runArguments.joinToString(" ")}")
+
+  private suspend fun commandCompletionQuery(query: String) =
+    client.query<CompletionResult>("${host()}/api/v0/command-completion?q=$query")
+
+  private suspend fun argumentCompletionQuery(query: String) =
+    client.query<CompletionResult>("${host()}/api/v0/argument-completion?q=$query")
+
+  private fun host() = if (local) "http://localhost:8080" else "https://api.coo.ee"
+
   private fun versionString(): String {
     return this.javaClass.`package`.implementationVersion ?: "dev"
   }
@@ -150,6 +176,8 @@ class Main {
     if (help?.showHelpIfRequested() == true) {
       return 0
     }
+
+    configureLogging(debug, false, false)
 
     initialise()
 
