@@ -9,7 +9,7 @@ class CooeeCli < Formula
 
   def install
     libexec.install Dir["*"]
-    bin.install_symlink "#{libexec}/bin/cooee-cli"
-#     bash_completion.install "#{libexec}/bash/completion.bash" => "cooee-cli"
+    bin.install_symlink "#{libexec}/bin/cooee-cli" => "cooee"
+    bash_completion.install "#{libexec}/bash/completion.bash" => "cooee"
   end
 end

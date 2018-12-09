@@ -11,6 +11,7 @@ import com.github.rvesse.airline.annotations.Command
 import com.github.rvesse.airline.annotations.Option
 import com.github.rvesse.airline.help.Help
 import com.github.rvesse.airline.parser.errors.ParseException
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import java.io.Closeable
@@ -21,11 +22,9 @@ import javax.inject.Inject
 import kotlin.system.exitProcess
 
 /**
- * Simple command line tool to make a RSocket connection and send/receive elements.
- *
- * Currently limited in features, only supports a text/line based approach.
+ * Simple command line tool to make a Coo.ee command.
  */
-@Command(name = "cooee-cli", description = "CLI for Coo.ee")
+@Command(name = "cooee", description = "CLI for Coo.ee")
 class Main {
   @Inject
   var help: HelpOption<Main>? = null
@@ -36,6 +35,12 @@ class Main {
   @Option(name = ["-l", "--local"], description = "Use local server")
   var local = false
 
+  @Option(name = ["--option-complete"], description = "Complete options")
+  var complete: String? = null
+
+  @Option(name = ["--command-complete"], description = "Complete Command")
+  var commandComplete: Boolean = false
+
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
@@ -45,7 +50,55 @@ class Main {
 
   val closeables = mutableListOf<Closeable>()
 
-  open fun initialise() {
+  private val logger = Logger.getLogger(Main::class.java.name)
+
+  fun runCommand(runArguments: List<String>): Int {
+    runBlocking {
+      when {
+        complete != null -> completeOption(complete!!)
+        version -> printVersion()
+        commandComplete -> completeCommand(arguments)
+        else -> cooeeCommand(arguments)
+      }
+    }
+
+    return 0
+  }
+
+  private fun listOptions(option: String): Collection<String> {
+    return when (option) {
+      "complete" -> listOf("complete")
+      else -> listOf()
+    }
+  }
+
+  private suspend fun completeCommand(arguments: List<String>) {
+    try {
+      val completionList: List<String> = buildCompletions(arguments)
+      outputHandler.info(completionList.joinToString("\n"))
+    } catch (e: Exception) {
+      logger.log(Level.FINE, "failure during url completion", e)
+    }
+  }
+
+  private fun buildCompletions(arguments: List<String>): List<String> {
+    // TODO real list
+    return listOf(arguments.last(), arguments.last() + "-1234", "TRANS", "TRANS-1234")
+  }
+
+  private fun printVersion() {
+      outputHandler.info(name() + " " + versionString())
+  }
+
+  private fun name(): String {
+    return "cooee-cli"
+  }
+
+  private fun completeOption(complete: String) {
+    return outputHandler.info(listOptions(complete).toSortedSet().joinToString(" "))
+  }
+
+  private fun initialise() {
     System.setProperty("apple.awt.UIElement", "true")
 
     if (!this::outputHandler.isInitialized) {
@@ -66,7 +119,7 @@ class Main {
     }
   }
 
-  open fun buildHandler(): OutputHandler<Response> {
+  private fun buildHandler(): OutputHandler<Response> {
     return ConsoleHandler.instance()
   }
 
@@ -76,7 +129,7 @@ class Main {
     return builder
   }
 
-  open suspend fun runCommand(runArguments: List<String>): Int {
+  private suspend fun cooeeCommand(runArguments: List<String>): Int {
     val host = if (local) "http://localhost:8080" else "https://coo.ee"
     val result = client.query<GoResult>("$host/api/v0/goinfo?q=" + runArguments.joinToString(" "))
 
@@ -89,7 +142,7 @@ class Main {
     }
   }
 
-  fun versionString(): String {
+  private fun versionString(): String {
     return this.javaClass.`package`.implementationVersion ?: "dev"
   }
 
