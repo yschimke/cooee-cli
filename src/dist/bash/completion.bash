@@ -25,13 +25,13 @@ _cooee_complete()
   if [[ ${cur} == -* ]]; then
       # TODO parse help automatically
       #_cooee_options=${_cooee_options:=$(_parse_help cooee --help)}
-      _cooee_options="-h --help -V --version -l --local --command-complete --option-complete"
+      _cooee_options="-h --help -V --version -l --local --command-complete --option-complete --debug"
       COMPREPLY=( $( compgen -W "$_cooee_options" -- "$cur" ) )
       return;
   fi
 
   # TODO cache completions
-  _cooee_commands=$(cooee --command-complete "${COMP_LINE}" "$COMP_POINT" "$cur")
+  _cooee_commands=$(cooee --command-complete "${COMP_LINE/#cooee }" "$cur" "$COMP_POINT")
   COMPREPLY=( $( compgen -W "$_cooee_commands" -- "$cur" ) )
 
   __ltrim_colon_completions "$cur"
