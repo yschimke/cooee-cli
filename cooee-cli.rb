@@ -6,14 +6,14 @@ class CooeeCli < Formula
 #   sha256 "97c304c18a89fcbe59e2d0f8d6767f777ec811529713ca8796c93c41b6cb566d"
 #   head "https://github.com/yschimke/cooee-cli.git"
 
-  # url "https://github.com/yschimke/cooee-cli.git"
+  url "https://github.com/yschimke/cooee-cli.git"
 
   depends_on :java
 
   def install
     system "./gradlew", "installDist"
 
-    libexec.install Dir["build/install/cooee-cli*/*"]
+    libexec.install Dir["build/install/cooee-cli/*"]
     bin.install_symlink "#{libexec}/bin/cooee-cli" => "cooee"
     bash_completion.install "#{libexec}/bash/completion.bash" => "cooee"
   end
