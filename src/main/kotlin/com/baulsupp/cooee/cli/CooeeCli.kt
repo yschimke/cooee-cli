@@ -3,7 +3,7 @@ package com.baulsupp.cooee.cli
 import com.baulsupp.oksocial.output.ConsoleHandler
 import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
-import com.baulsupp.oksocial.output.systemOut
+import com.baulsupp.okurl.kotlin.edit
 import com.baulsupp.okurl.kotlin.query
 import com.baulsupp.okurl.util.LoggingUtil.Companion.configureLogging
 import com.github.rvesse.airline.HelpOption
@@ -141,6 +141,14 @@ class Main {
 
   private fun createClientBuilder(): OkHttpClient.Builder {
     val builder = OkHttpClient.Builder()
+
+    builder.addInterceptor {
+      it.proceed(it.request().edit {
+        header("User-Agent", "cooee-cli/" + versionString())
+        // TODO fake for now
+        header("Authorization", "Bearer " + System.getenv("USER"))
+      })
+    }
 
     return builder
   }
