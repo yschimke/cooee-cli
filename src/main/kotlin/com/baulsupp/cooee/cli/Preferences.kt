@@ -4,14 +4,13 @@ import com.squareup.moshi.Moshi
 import okio.buffer
 import okio.source
 import java.io.File
-import java.net.InetSocketAddress
-import java.net.Proxy
 import java.util.logging.Level
 import java.util.logging.Logger
 
 data class Preferences(
-  val api: String? = null
-  ) {
+  val api: String? = null,
+  val web: String? = null
+) {
   companion object {
     private val logger = Logger.getLogger(Preferences::class.java.name)
 
