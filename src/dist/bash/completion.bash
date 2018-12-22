@@ -61,7 +61,7 @@ _cooee_complete()
   if [[ ${cur} == -* ]]; then
       # TODO parse help automatically
       #_cooee_options=${_cooee_options:=$(_parse_help cooee --help)}
-      _cooee_options="-h --help -V --version -l --local --command-complete --option-complete --debug"
+      _cooee_options="-h --help -V --version -l --local --command-complete --option-complete --debug --login"
       COMPREPLY=( $( compgen -W "$_cooee_options" -- "$cur" ) )
       return;
   fi

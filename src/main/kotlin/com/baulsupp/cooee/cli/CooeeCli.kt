@@ -3,8 +3,13 @@ package com.baulsupp.cooee.cli
 import com.baulsupp.oksocial.output.ConsoleHandler
 import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
+import com.baulsupp.okurl.authenticator.SimpleWebServer
+import com.baulsupp.okurl.credentials.CredentialFactory
+import com.baulsupp.okurl.credentials.CredentialsStore
+import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.kotlin.edit
 import com.baulsupp.okurl.kotlin.query
+import com.baulsupp.okurl.secrets.Secrets
 import com.baulsupp.okurl.util.LoggingUtil.Companion.configureLogging
 import com.github.rvesse.airline.HelpOption
 import com.github.rvesse.airline.SingleCommand
@@ -18,6 +23,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import java.io.Closeable
 import java.util.ArrayList
+import java.util.UUID
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.inject.Inject
@@ -46,12 +52,17 @@ class Main {
   @Option(name = ["--debug"], description = "Debug Output")
   var debug: Boolean = false
 
+  @Option(name = ["--login"], description = "Login")
+  var login: Boolean = false
+
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
   lateinit var client: OkHttpClient
 
   lateinit var outputHandler: OutputHandler<Response>
+
+  lateinit var credentialsStore: CredentialsStore
 
   val closeables = mutableListOf<Closeable>()
 
@@ -63,11 +74,30 @@ class Main {
         complete != null -> completeOption(complete!!)
         version -> printVersion()
         commandComplete -> completeCommand(arguments)
+        login -> login()
         else -> cooeeCommand(arguments)
       }
     }
 
     return 0
+  }
+
+  private suspend fun login() {
+    val user = Secrets.prompt("User", "cooee.user", System.getenv("USER"), false)
+    val email = Secrets.prompt("Email", "cooee.email", "", false)
+    val secret = Secrets.prompt("Secret", "cooee.secret", UUID.randomUUID().toString(), true)
+
+    val web = Preferences.local.web ?: "https://coo.ee"
+
+    SimpleWebServer.forCode().use { s ->
+      val loginUrl = "$web/login?user=$user&email=$email&secret=$secret&callback=${s.redirectUri}"
+
+      outputHandler.openLink(loginUrl)
+
+      val code = s.waitForCode()
+
+      credentialsStore.set(serviceDefinition, DefaultToken.name, Jwt(code))
+    }
   }
 
   private fun listOptions(option: String): Collection<String> {
@@ -121,6 +151,10 @@ class Main {
       outputHandler = buildHandler()
     }
 
+    if (!this::credentialsStore.isInitialized) {
+      credentialsStore = CredentialFactory.createCredentialsStore()
+    }
+
     closeables.add(Closeable {
       if (this::client.isInitialized) {
         client.dispatcher().executorService().shutdown()
@@ -145,6 +179,7 @@ class Main {
     builder.addInterceptor {
       it.proceed(it.request().edit {
         header("User-Agent", "cooee-cli/" + versionString())
+
         // TODO fake for now
         header("Authorization", "Bearer " + System.getenv("USER"))
       })
