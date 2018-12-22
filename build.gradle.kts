@@ -64,9 +64,13 @@ dependencies {
   implementation(Deps.coroutinesCore)
   implementation(Deps.kotlinReflect)
   implementation(Deps.kotlinStandardLibrary)
+  implementation(Deps.moshi)
+  implementation(Deps.moshiAdapters)
+  implementation(Deps.moshiKotlin)
   implementation(Deps.okurl)
   implementation(Deps.oksocialOutput)
   implementation(Deps.okhttp)
+  implementation(Deps.okio)
 
   testImplementation(Deps.kotlinTest)
   testImplementation(Deps.kotlinTestJunit)

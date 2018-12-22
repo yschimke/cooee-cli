@@ -103,7 +103,7 @@ class Main {
   }
 
   private fun printVersion() {
-      outputHandler.info(name() + " " + versionString())
+    outputHandler.info(name() + " " + versionString())
   }
 
   private fun name(): String {
@@ -174,7 +174,11 @@ class Main {
   private suspend fun argumentCompletionQuery(query: String) =
     client.query<CompletionResult>("${host()}/api/v0/argument-completion?q=$query")
 
-  private fun host() = if (local) "http://localhost:8080" else "https://api.coo.ee"
+  private fun host() = when {
+    local -> "http://localhost:8080"
+    Preferences.local.api != null -> Preferences.local.api
+    else -> "https://api.coo.ee"
+  }
 
   private fun versionString(): String {
     return this.javaClass.`package`.implementationVersion ?: "dev"
