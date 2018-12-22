@@ -183,7 +183,9 @@ class Main {
 
         val token = runBlocking { credentialsStore.get(serviceDefinition, DefaultToken) }
 
-        header("Authorization", "Bearer $token")
+        if (token != null) {
+          header("Authorization", "Bearer ${token.token}")
+        }
       })
     }
 
