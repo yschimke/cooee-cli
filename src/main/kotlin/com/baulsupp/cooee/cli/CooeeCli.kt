@@ -180,8 +180,9 @@ class Main {
       it.proceed(it.request().edit {
         header("User-Agent", "cooee-cli/" + versionString())
 
-        // TODO fake for now
-        header("Authorization", "Bearer " + System.getenv("USER"))
+        val token = runBlocking { credentialsStore.get(serviceDefinition, DefaultToken) }
+
+        header("Authorization", "Bearer $token")
       })
     }
 
