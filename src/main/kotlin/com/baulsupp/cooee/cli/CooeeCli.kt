@@ -10,6 +10,7 @@ import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.kotlin.edit
 import com.baulsupp.okurl.kotlin.query
 import com.baulsupp.okurl.secrets.Secrets
+import com.baulsupp.okurl.util.ClientException
 import com.baulsupp.okurl.util.LoggingUtil.Companion.configureLogging
 import com.github.rvesse.airline.HelpOption
 import com.github.rvesse.airline.SingleCommand
@@ -239,9 +240,12 @@ class Main {
     } catch (e: UsageException) {
       outputHandler.showError(e.message)
       -1
+    } catch (e: ClientException) {
+      outputHandler.showError(e.message)
+      -2
     } catch (e: Exception) {
       outputHandler.showError("unknown error", e)
-      -2
+      -3
     } finally {
       closeClients()
     }
