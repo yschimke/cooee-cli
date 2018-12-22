@@ -56,6 +56,9 @@ class Main {
   @Option(name = ["--login"], description = "Login")
   var login: Boolean = false
 
+  @Option(name = ["--logout"], description = "Logout")
+  var logout: Boolean = false
+
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
@@ -76,6 +79,7 @@ class Main {
         version -> printVersion()
         commandComplete -> completeCommand(arguments)
         login -> login()
+        logout -> logout()
         else -> cooeeCommand(arguments)
       }
     }
@@ -99,6 +103,10 @@ class Main {
 
       credentialsStore.set(serviceDefinition, DefaultToken.name, Jwt(code))
     }
+  }
+
+  private suspend fun logout() {
+    credentialsStore.remove(serviceDefinition, DefaultToken.name)
   }
 
   private fun listOptions(option: String): Collection<String> {
