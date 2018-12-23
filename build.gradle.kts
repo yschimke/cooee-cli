@@ -67,10 +67,10 @@ dependencies {
   implementation(Deps.moshi)
   implementation(Deps.moshiAdapters)
   implementation(Deps.moshiKotlin)
-  implementation(Deps.okurl)
-  implementation(Deps.oksocialOutput)
   implementation(Deps.okhttp)
   implementation(Deps.okio)
+  implementation(Deps.oksocialOutput)
+  implementation(Deps.okurl)
 
   testImplementation(Deps.kotlinTest)
   testImplementation(Deps.kotlinTestJunit)

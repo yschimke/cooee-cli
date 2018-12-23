@@ -1,17 +1,17 @@
 object Versions {
   val jackson = "2.9.7"
   val junit = "5.3.2"
-  val kotlin = "1.3.10"
-  val kotlinCoroutines = "1.0.1"
+  val kotlin = "1.3.11"
+  val kotlinCoroutines = "1.1.0"
   val moshiVersion = "1.8.0"
-  val okurl = "1.66.0"
-  val oksocialOutput = "4.25.0"
   val okhttp = "3.12.0"
+  val oksocialOutput = "4.25.0"
+  val okurl = "1.67.0"
 }
 
 object Deps {
-  val airline2 = "com.github.rvesse:airline:2.6.0"
   val activation = "javax.activation:activation:1.1.1"
+  val airline2 = "com.github.rvesse:airline:2.6.0"
   val byteunits = "com.jakewharton.byteunits:byteunits:0.9.1"
   val coroutinesCore = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinCoroutines}"
   val jacksonCbor = "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${Versions.jackson}"
@@ -30,8 +30,8 @@ object Deps {
   val moshi = "com.squareup.moshi:moshi:${Versions.moshiVersion}"
   val moshiAdapters = "com.squareup.moshi:moshi-adapters:${Versions.moshiVersion}"
   val moshiKotlin = "com.squareup.moshi:moshi-kotlin:${Versions.moshiVersion}"
-  val okio = "com.squareup.okio:okio:2.1.0"
   val okhttp = "com.squareup.okhttp3:okhttp:${Versions.okhttp}"
+  val okio = "com.squareup.okio:okio:2.1.0"
   val oksocialOutput = "com.baulsupp:oksocial-output:${Versions.oksocialOutput}"
   val okurl = "com.baulsupp:okurl:${Versions.okurl}"
   val slf4jApi = "org.slf4j:slf4j-api:1.8.0-beta2"
