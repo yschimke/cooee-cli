@@ -96,7 +96,7 @@ class Main {
     val email = Secrets.prompt("Email", "cooee.email", "", false)
     val secret = Secrets.prompt("Secret", "cooee.secret", UUID.randomUUID().toString(), true)
 
-    val web = Preferences.local.web ?: "https://coo.ee"
+    val web = webHost()
 
     SimpleWebServer.forCode().use { s ->
       val loginUrl = "$web/login?user=$user&email=$email&secret=$secret&callback=${s.redirectUri}"
@@ -217,18 +217,24 @@ class Main {
   }
 
   private suspend fun bounceQuery(runArguments: List<String>) =
-    client.query<GoResult>("${host()}/api/v0/goinfo?q=${runArguments.joinToString(" ")}")
+    client.query<GoResult>("${apiHost()}/api/v0/goinfo?q=${runArguments.joinToString(" ")}")
 
   private suspend fun commandCompletionQuery(query: String) =
-    client.query<CompletionResult>("${host()}/api/v0/command-completion?q=$query")
+    client.query<CompletionResult>("${apiHost()}/api/v0/command-completion?q=$query")
 
   private suspend fun argumentCompletionQuery(query: String) =
-    client.query<CompletionResult>("${host()}/api/v0/argument-completion?q=$query")
+    client.query<CompletionResult>("${apiHost()}/api/v0/argument-completion?q=$query")
 
-  private fun host() = when {
+  private fun apiHost() = when {
     local -> "http://localhost:8080"
     Preferences.local.api != null -> Preferences.local.api
     else -> "https://api.coo.ee"
+  }
+
+  private fun webHost() = when {
+    local -> "http://localhost:3000"
+    Preferences.local.web != null -> Preferences.local.web
+    else -> "https://coo.ee"
   }
 
   private fun versionString(): String {
