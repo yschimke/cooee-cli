@@ -3,6 +3,7 @@ package com.baulsupp.cooee.cli
 import com.baulsupp.oksocial.output.ConsoleHandler
 import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
+import com.baulsupp.okurl.authenticator.Jwt
 import com.baulsupp.okurl.authenticator.SimpleWebServer
 import com.baulsupp.okurl.credentials.CredentialFactory
 import com.baulsupp.okurl.credentials.CredentialsStore
@@ -10,6 +11,7 @@ import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.kotlin.edit
 import com.baulsupp.okurl.kotlin.query
 import com.baulsupp.okurl.secrets.Secrets
+import com.baulsupp.okurl.services.cooee.CooeeAuthInterceptor
 import com.baulsupp.okurl.util.ClientException
 import com.baulsupp.okurl.util.LoggingUtil.Companion.configureLogging
 import com.github.rvesse.airline.HelpOption
@@ -71,6 +73,8 @@ class Main {
   val closeables = mutableListOf<Closeable>()
 
   private val logger = Logger.getLogger(Main::class.java.name)
+
+  private val serviceDefinition = CooeeAuthInterceptor().serviceDefinition
 
   fun runCommand(runArguments: List<String>): Int {
     runBlocking {
