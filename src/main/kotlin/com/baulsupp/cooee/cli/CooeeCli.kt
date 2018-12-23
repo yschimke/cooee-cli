@@ -98,7 +98,9 @@ class Main {
 
     val web = webHost()
 
-    SimpleWebServer.forCode().use { s ->
+    SimpleWebServer({ r ->
+      r.queryParameter("code")
+    }, port = 3001).use { s ->
       val loginUrl = "$web/login?user=$user&email=$email&secret=$secret&callback=${s.redirectUri}"
 
       outputHandler.openLink(loginUrl)
@@ -232,7 +234,7 @@ class Main {
   }
 
   private fun webHost() = when {
-    local -> "http://localhost:3000"
+    local -> "http://localhost:8080"
     Preferences.local.web != null -> Preferences.local.web
     else -> "https://coo.ee"
   }
