@@ -4,11 +4,12 @@ import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.AuthInterceptor
 import com.baulsupp.okurl.commands.ToolSession
 import com.baulsupp.okurl.credentials.TokenSet
-import com.baulsupp.okurl.kotlin.client
+import com.baulsupp.okurl.kotlin.query
+import com.baulsupp.okurl.kotlin.queryForString
+import com.baulsupp.okurl.kotlin.request
 import com.baulsupp.okurl.secrets.Secrets
 
-class ServiceAuthorisation(val main: ToolSession) {
-
+class ServiceAuthorisation(val main: ToolSession, val apiHost: String) {
   suspend fun authorize(
     serviceName: String,
     token: String? = null,
@@ -35,15 +36,20 @@ class ServiceAuthorisation(val main: ToolSession) {
     tokenSet: TokenSet,
     credentials: T
   ) {
+    val token = auth.serviceDefinition.formatCredentialsString(credentials)
+
     main.credentialsStore.set(auth.serviceDefinition, tokenSet.name, credentials)
+    main.client.queryForString(request("$apiHost/api/v0/authorize?serviceName=${auth.name()}&token=$token&tokenSet=${tokenSet.name}") {
+      post(emptyBody)
+    })
   }
 
   suspend fun <T> authRequest(auth: AuthInterceptor<T>, tokenSet: TokenSet) {
     auth.serviceDefinition.accountsLink()?.let { main.outputHandler.info("Accounts: $it") }
 
-    val credentials = auth.authorize(client, main.outputHandler, listOf())
+    val credentials = auth.authorize(main.client, main.outputHandler, listOf())
 
-    main.credentialsStore.set(auth.serviceDefinition, tokenSet.name, credentials)
+    saveCredentials(auth, tokenSet, credentials)
 
     Secrets.instance.saveIfNeeded()
   }

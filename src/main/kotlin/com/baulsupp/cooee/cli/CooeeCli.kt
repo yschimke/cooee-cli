@@ -20,6 +20,7 @@ import com.baulsupp.okurl.services.ServiceLibrary
 import com.baulsupp.okurl.services.cooee.CooeeAuthInterceptor
 import com.baulsupp.okurl.util.ClientException
 import com.baulsupp.okurl.util.LoggingUtil.Companion.configureLogging
+import com.github.markusbernhardt.proxy.ProxySearch
 import com.github.rvesse.airline.HelpOption
 import com.github.rvesse.airline.SingleCommand
 import com.github.rvesse.airline.annotations.Arguments
@@ -28,8 +29,11 @@ import com.github.rvesse.airline.annotations.Option
 import com.github.rvesse.airline.help.Help
 import com.github.rvesse.airline.parser.errors.ParseException
 import kotlinx.coroutines.runBlocking
+import okhttp3.MediaType
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody
 import okhttp3.Response
+import okhttp3.logging.HttpLoggingInterceptor
 import java.io.Closeable
 import java.util.ArrayList
 import java.util.UUID
@@ -38,11 +42,13 @@ import java.util.logging.Logger
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
+val emptyBody = RequestBody.create(MediaType.get("text/plain"), "")
+
 /**
  * Simple command line tool to make a Coo.ee command.
  */
 @Command(name = "cooee", description = "CLI for Coo.ee")
-class Main: ToolSession {
+class Main : ToolSession {
   @Inject
   var help: HelpOption<Main>? = null
 
@@ -112,7 +118,7 @@ class Main: ToolSession {
   }
 
   private suspend fun authorize() {
-    ServiceAuthorisation(this).authorize(authorize!!, token, defaultTokenSet)
+    ServiceAuthorisation(this, apiHost()).authorize(authorize!!, token, defaultTokenSet)
   }
 
   private suspend fun login() {
@@ -207,8 +213,8 @@ class Main: ToolSession {
 
     closeables.add(Closeable {
       if (this::client.isInitialized) {
-        client.dispatcher().executorService().shutdown()
         client.connectionPool().evictAll()
+        client.dispatcher().executorService().shutdownNow()
       }
     })
 
@@ -223,8 +229,23 @@ class Main: ToolSession {
     return ConsoleHandler.instance()
   }
 
+  private fun applyProxy(builder: OkHttpClient.Builder) {
+    when {
+      Preferences.local.proxy != null -> builder.proxy(Preferences.local.proxy!!.build())
+      else -> builder.proxySelector(ProxySearch.getDefaultProxySearch().proxySelector)
+    }
+  }
+
   private fun createClientBuilder(): OkHttpClient.Builder {
     val builder = OkHttpClient.Builder()
+
+    if (debug) {
+      val loggingInterceptor = HttpLoggingInterceptor()
+      loggingInterceptor.level = HttpLoggingInterceptor.Level.HEADERS
+      builder.networkInterceptors().add(loggingInterceptor)
+    }
+
+    applyProxy(builder)
 
     builder.addInterceptor {
       it.proceed(it.request().edit {
@@ -264,13 +285,13 @@ class Main: ToolSession {
 
   private fun apiHost() = when {
     local -> "http://localhost:8080"
-    Preferences.local.api != null -> Preferences.local.api
+    Preferences.local.api != null -> Preferences.local.api!!
     else -> "https://api.coo.ee"
   }
 
   private fun webHost() = when {
     local -> "http://localhost:8080"
-    Preferences.local.web != null -> Preferences.local.web
+    Preferences.local.web != null -> Preferences.local.web!!
     else -> "https://coo.ee"
   }
 
