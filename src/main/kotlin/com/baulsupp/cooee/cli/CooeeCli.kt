@@ -6,12 +6,17 @@ import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.Jwt
 import com.baulsupp.okurl.authenticator.SimpleWebServer
+import com.baulsupp.okurl.commands.ToolSession
 import com.baulsupp.okurl.credentials.CredentialFactory
 import com.baulsupp.okurl.credentials.CredentialsStore
 import com.baulsupp.okurl.credentials.DefaultToken
+import com.baulsupp.okurl.credentials.TokenSet
 import com.baulsupp.okurl.kotlin.edit
 import com.baulsupp.okurl.kotlin.query
+import com.baulsupp.okurl.location.BestLocation
+import com.baulsupp.okurl.location.LocationSource
 import com.baulsupp.okurl.secrets.Secrets
+import com.baulsupp.okurl.services.ServiceLibrary
 import com.baulsupp.okurl.services.cooee.CooeeAuthInterceptor
 import com.baulsupp.okurl.util.ClientException
 import com.baulsupp.okurl.util.LoggingUtil.Companion.configureLogging
@@ -37,7 +42,7 @@ import kotlin.system.exitProcess
  * Simple command line tool to make a Coo.ee command.
  */
 @Command(name = "cooee", description = "CLI for Coo.ee")
-class Main {
+class Main: ToolSession {
   @Inject
   var help: HelpOption<Main>? = null
 
@@ -65,14 +70,24 @@ class Main {
   @Option(name = ["--authorize"], description = "Authorize Service")
   var authorize: String? = null
 
+  @Option(name = ["--token"], description = "Auth Token")
+  var token: String? = null
+
+  @Option(name = ["--tokenSet"], description = "Token Set")
+  override var defaultTokenSet: TokenSet = DefaultToken
+
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
-  lateinit var client: OkHttpClient
+  override lateinit var client: OkHttpClient
 
-  lateinit var outputHandler: OutputHandler<Response>
+  override lateinit var outputHandler: OutputHandler<Response>
 
-  lateinit var credentialsStore: CredentialsStore
+  override lateinit var credentialsStore: CredentialsStore
+
+  override lateinit var locationSource: LocationSource
+
+  override lateinit var serviceLibrary: ServiceLibrary
 
   val closeables = mutableListOf<Closeable>()
 
@@ -88,11 +103,16 @@ class Main {
         commandComplete -> completeCommand(arguments)
         login -> login()
         logout -> logout()
+        authorize != null -> authorize()
         else -> cooeeCommand(arguments)
       }
     }
 
     return 0
+  }
+
+  private suspend fun authorize() {
+    ServiceAuthorisation(this).authorize(authorize!!, token, defaultTokenSet)
   }
 
   private suspend fun login() {
@@ -102,9 +122,9 @@ class Main {
 
     val web = webHost()
 
-    SimpleWebServer({ r ->
+    SimpleWebServer(port = 3001) { r ->
       r.queryParameter("code")
-    }, port = 3001).use { s ->
+    }.use { s ->
       val loginUrl = "$web/login?user=$user&email=$email&secret=$secret&callback=${s.redirectUri}"
 
       outputHandler.openLink(loginUrl)
@@ -122,10 +142,12 @@ class Main {
   private fun listOptions(option: String): Collection<String> {
     return when (option) {
       "complete" -> listOf("complete", "authorize")
-      "authorize" -> AuthenticatingInterceptor.defaultServices().map { it.serviceDefinition.shortName() }
+      "authorize" -> knownServices.map { it.serviceDefinition.shortName() }
       else -> listOf()
     }
   }
+
+  private val knownServices by lazy { AuthenticatingInterceptor.defaultServices() }
 
   private suspend fun completeCommand(arguments: List<String>) {
     try {
@@ -173,6 +195,14 @@ class Main {
 
     if (!this::credentialsStore.isInitialized) {
       credentialsStore = CredentialFactory.createCredentialsStore()
+    }
+
+    if (!this::locationSource.isInitialized) {
+      locationSource = BestLocation(outputHandler)
+    }
+
+    if (!this::serviceLibrary.isInitialized) {
+      serviceLibrary = OkurlServiceLibrary
     }
 
     closeables.add(Closeable {
@@ -274,11 +304,11 @@ class Main {
       outputHandler.showError("unknown error", e)
       -3
     } finally {
-      closeClients()
+      close()
     }
   }
 
-  private fun closeClients() {
+  override fun close() {
     for (c in closeables) {
       try {
         c.close()

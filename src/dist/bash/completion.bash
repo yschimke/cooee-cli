@@ -48,6 +48,9 @@ _cooee_complete()
   case ${prev} in
         # options with an argument we don't currently help with, everything else is assumed to be handled
         # below in case statement or has no arguments so drops through to the url handling near the end
+        --token)
+            return
+            ;;
         --authorize)
             _cooee_complete=$(cooee --option-complete authorize)
             COMPREPLY=( $( compgen -W "${_cooee_complete}" -- "$cur" ) )
