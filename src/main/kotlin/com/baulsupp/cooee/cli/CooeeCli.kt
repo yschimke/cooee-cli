@@ -3,6 +3,7 @@ package com.baulsupp.cooee.cli
 import com.baulsupp.oksocial.output.ConsoleHandler
 import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
+import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.Jwt
 import com.baulsupp.okurl.authenticator.SimpleWebServer
 import com.baulsupp.okurl.credentials.CredentialFactory
@@ -61,6 +62,9 @@ class Main {
   @Option(name = ["--logout"], description = "Logout")
   var logout: Boolean = false
 
+  @Option(name = ["--authorize"], description = "Authorize Service")
+  var authorize: String? = null
+
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
@@ -117,7 +121,8 @@ class Main {
 
   private fun listOptions(option: String): Collection<String> {
     return when (option) {
-      "complete" -> listOf("complete")
+      "complete" -> listOf("complete", "authorize")
+      "authorize" -> AuthenticatingInterceptor.defaultServices().map { it.serviceDefinition.shortName() }
       else -> listOf()
     }
   }
