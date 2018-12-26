@@ -1,15 +1,25 @@
 package com.baulsupp.cooee.cli
 
+import com.baulsupp.okurl.preferences.Proxy
 import com.squareup.moshi.Moshi
 import okio.buffer
 import okio.source
 import java.io.File
+import java.net.InetSocketAddress
 import java.util.logging.Level
 import java.util.logging.Logger
 
+data class Proxy(val host: String, val port: Int, val user: String?, val password: String?, val type: java.net.Proxy.Type?) {
+  fun build(): java.net.Proxy {
+    val address = InetSocketAddress(host, port)
+    return java.net.Proxy(java.net.Proxy.Type.SOCKS, address)
+  }
+}
+
 data class Preferences(
   val api: String? = null,
-  val web: String? = null
+  val web: String? = null,
+  val proxy: Proxy? = null
 ) {
   companion object {
     private val logger = Logger.getLogger(Preferences::class.java.name)
