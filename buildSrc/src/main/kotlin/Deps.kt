@@ -4,7 +4,7 @@ object Versions {
   val kotlin = "1.3.11"
   val kotlinCoroutines = "1.1.0"
   val moshiVersion = "1.8.0"
-  val okhttp = "3.12.0"
+  val okhttp = "3.12.1"
   val oksocialOutput = "4.25.0"
   val okurl = "1.67.0"
 }
