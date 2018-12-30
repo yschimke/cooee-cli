@@ -268,6 +268,9 @@ class Main : ToolSession {
     if (result.location != null) {
       outputHandler.openLink(result.location)
       return 0
+    } else if (result.message != null) {
+      outputHandler.info(result.message)
+      return 0
     } else {
       outputHandler.showError("No results found")
       return -1
