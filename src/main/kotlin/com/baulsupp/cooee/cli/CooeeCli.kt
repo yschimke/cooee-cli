@@ -28,6 +28,8 @@ import com.github.rvesse.airline.annotations.Command
 import com.github.rvesse.airline.annotations.Option
 import com.github.rvesse.airline.help.Help
 import com.github.rvesse.airline.parser.errors.ParseException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -211,6 +213,10 @@ class Main : ToolSession {
       serviceLibrary = OkurlServiceLibrary
     }
 
+    if (!this::authenticatingInterceptor.isInitialized) {
+      authenticatingInterceptor = AuthenticatingInterceptor(this)
+    }
+
     closeables.add(Closeable {
       if (this::client.isInitialized) {
         client.connectionPool().evictAll()
@@ -236,6 +242,8 @@ class Main : ToolSession {
     }
   }
 
+  private lateinit var authenticatingInterceptor: AuthenticatingInterceptor
+
   private fun createClientBuilder(): OkHttpClient.Builder {
     val builder = OkHttpClient.Builder()
 
@@ -251,13 +259,17 @@ class Main : ToolSession {
       it.proceed(it.request().edit {
         header("User-Agent", "cooee-cli/" + versionString())
 
-        val token = runBlocking { credentialsStore.get(serviceDefinition, DefaultToken) }
+        if (local && it.request().url().host() == "localhost") {
+          val token = runBlocking { credentialsStore.get(serviceDefinition, DefaultToken) }
 
-        if (token != null) {
-          header("Authorization", "Bearer ${token.token}")
+          if (token != null) {
+            header("Authorization", "Bearer ${token.token}")
+          }
         }
       })
     }
+
+    builder.addNetworkInterceptor(authenticatingInterceptor)
 
     return builder
   }
@@ -354,6 +366,9 @@ private fun fromArgs(vararg args: String): Main {
   }
 }
 
+@ExperimentalCoroutinesApi
 suspend fun main(vararg args: String) {
+  DebugProbes.install()
+
   fromArgs(*args).run()
 }
