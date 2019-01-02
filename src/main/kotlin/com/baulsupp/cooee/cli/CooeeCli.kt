@@ -12,9 +12,12 @@ import com.baulsupp.okurl.credentials.CredentialsStore
 import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.credentials.TokenSet
 import com.baulsupp.okurl.kotlin.edit
+import com.baulsupp.okurl.kotlin.execute
 import com.baulsupp.okurl.kotlin.query
+import com.baulsupp.okurl.kotlin.request
 import com.baulsupp.okurl.location.BestLocation
 import com.baulsupp.okurl.location.LocationSource
+import com.baulsupp.okurl.okhttp.OkHttpResponseExtractor
 import com.baulsupp.okurl.secrets.Secrets
 import com.baulsupp.okurl.services.ServiceLibrary
 import com.baulsupp.okurl.services.cooee.CooeeAuthInterceptor
@@ -214,7 +217,7 @@ class Main : ToolSession {
     }
 
     if (!this::authenticatingInterceptor.isInitialized) {
-      authenticatingInterceptor = AuthenticatingInterceptor(this)
+      authenticatingInterceptor = AuthenticatingInterceptor(this.credentialsStore)
     }
 
     closeables.add(Closeable {
@@ -232,7 +235,7 @@ class Main : ToolSession {
   }
 
   private fun buildHandler(): OutputHandler<Response> {
-    return ConsoleHandler.instance()
+    return ConsoleHandler.instance(OkHttpResponseExtractor())
   }
 
   private fun applyProxy(builder: OkHttpClient.Builder) {
@@ -277,11 +280,17 @@ class Main : ToolSession {
   private suspend fun cooeeCommand(runArguments: List<String>): Int {
     val result = bounceQuery(runArguments)
 
-    if (result.location != null) {
-      outputHandler.openLink(result.location)
-      return 0
-    } else if (result.message != null) {
-      outputHandler.info(result.message)
+    if (result.location != null || result.message != null || result.image != null) {
+      if (result.location != null) {
+        outputHandler.openLink(result.location)
+      }
+      if (result.message != null) {
+        outputHandler.info(result.message)
+      }
+      if (result.image != null) {
+        val response = client.execute(request(result.image))
+        outputHandler.showOutput(response)
+      }
       return 0
     } else {
       outputHandler.showError("No results found")
