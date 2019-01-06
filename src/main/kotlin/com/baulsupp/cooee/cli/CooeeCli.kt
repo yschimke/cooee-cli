@@ -31,8 +31,14 @@ import com.github.rvesse.airline.annotations.Command
 import com.github.rvesse.airline.annotations.Option
 import com.github.rvesse.airline.help.Help
 import com.github.rvesse.airline.parser.errors.ParseException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CoroutineStart.*
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.debug.DebugProbes
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -278,23 +284,30 @@ class Main : ToolSession {
   }
 
   private suspend fun cooeeCommand(runArguments: List<String>): Int {
-    val result = bounceQuery(runArguments)
+    return coroutineScope {
+      val result = bounceQuery(runArguments)
 
-    if (result.location != null || result.message != null || result.image != null) {
-      if (result.location != null) {
-        outputHandler.openLink(result.location)
+      if (result.location != null || result.message != null || result.image != null) {
+        var imageResponse: Deferred<Response>? = null
+        if (result.image != null) {
+          imageResponse = async { client.execute(request(result.image)) }
+        }
+        if (result.message != null) {
+          outputHandler.info(result.message)
+        }
+        if (result.location != null) {
+          launch(start = ATOMIC) {
+            outputHandler.openLink(result.location)
+          }
+        }
+        if (imageResponse != null) {
+          outputHandler.showOutput(imageResponse.await())
+        }
+        0
+      } else {
+        outputHandler.showError("No results found")
+        -1
       }
-      if (result.message != null) {
-        outputHandler.info(result.message)
-      }
-      if (result.image != null) {
-        val response = client.execute(request(result.image))
-        outputHandler.showOutput(response)
-      }
-      return 0
-    } else {
-      outputHandler.showError("No results found")
-      return -1
     }
   }
 
