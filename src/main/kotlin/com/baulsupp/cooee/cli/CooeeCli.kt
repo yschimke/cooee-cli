@@ -5,7 +5,6 @@ import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.Jwt
-import com.baulsupp.okurl.authenticator.SimpleWebServer
 import com.baulsupp.okurl.commands.ToolSession
 import com.baulsupp.okurl.credentials.CredentialFactory
 import com.baulsupp.okurl.credentials.CredentialsStore
@@ -31,8 +30,7 @@ import com.github.rvesse.airline.annotations.Command
 import com.github.rvesse.airline.annotations.Option
 import com.github.rvesse.airline.help.Help
 import com.github.rvesse.airline.parser.errors.ParseException
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.CoroutineStart.*
+import kotlinx.coroutines.CoroutineStart.ATOMIC
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -47,7 +45,6 @@ import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.Closeable
 import java.util.ArrayList
-import java.util.UUID
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.inject.Inject
@@ -133,23 +130,13 @@ class Main : ToolSession {
   }
 
   private suspend fun login() {
-    val user = Secrets.prompt("User", "cooee.user", System.getenv("USER"), false)
-    val email = Secrets.prompt("Email", "cooee.email", "", false)
-    val secret = Secrets.prompt("Secret", "cooee.secret", UUID.randomUUID().toString(), true)
-
     val web = webHost()
 
-    SimpleWebServer(port = 3001) { r ->
-      r.queryParameter("code")
-    }.use { s ->
-      val loginUrl = "$web/login?user=$user&email=$email&secret=$secret&callback=${s.redirectUri}"
+    outputHandler.openLink("$web/user/jwt")
 
-      outputHandler.openLink(loginUrl)
+    val token = Secrets.prompt("Cooee API Token", "cooee.token", "", true)
 
-      val code = s.waitForCode()
-
-      credentialsStore.set(serviceDefinition, DefaultToken.name, Jwt(code))
-    }
+    credentialsStore.set(serviceDefinition, DefaultToken.name, Jwt(token))
   }
 
   private suspend fun logout() {
@@ -327,9 +314,9 @@ class Main : ToolSession {
   }
 
   private fun webHost() = when {
-    local -> "http://localhost:8080"
+    local -> "http://localhost:5000"
     Preferences.local.web != null -> Preferences.local.web!!
-    else -> "https://coo.ee"
+    else -> "https://www.coo.ee"
   }
 
   private fun versionString(): String {
