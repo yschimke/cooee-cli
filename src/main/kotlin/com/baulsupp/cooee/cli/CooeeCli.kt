@@ -72,6 +72,9 @@ class Main : ToolSession {
   @Option(name = ["--command-complete"], description = "Complete Command")
   var commandComplete: Boolean = false
 
+  @Option(name = ["--fish-complete"], description = "Complete Command")
+  var fishComplete: Boolean = false
+
   @Option(name = ["--debug"], description = "Debug Output")
   var debug: Boolean = false
 
@@ -114,7 +117,8 @@ class Main : ToolSession {
       when {
         complete != null -> completeOption(complete!!)
         version -> printVersion()
-        commandComplete -> completeCommand(arguments)
+        commandComplete -> ShellCompletion(this@Main, apiHost(), Shell.BASH).completeCommand(arguments.joinToString(" "))
+        fishComplete -> ShellCompletion(this@Main, apiHost(), Shell.FISH).completeCommand(arguments.joinToString(" "))
         login -> login()
         logout -> logout()
         authorize != null -> authorize()
@@ -145,7 +149,7 @@ class Main : ToolSession {
 
   private fun listOptions(option: String): Collection<String> {
     return when (option) {
-      "complete" -> listOf("complete", "authorize")
+      "command-complete" -> listOf("command-complete", "authorize")
       "authorize" -> knownServices.map { it.serviceDefinition.shortName() }
       else -> listOf()
     }
@@ -153,30 +157,6 @@ class Main : ToolSession {
 
   private val knownServices by lazy { AuthenticatingInterceptor.defaultServices() }
 
-  private suspend fun completeCommand(arguments: List<String>) {
-    try {
-      val completionList: List<String> = buildCompletions(arguments)
-      outputHandler.info(completionList.joinToString("\n"))
-    } catch (ue: UsageException) {
-      throw ue
-    } catch (e: Exception) {
-      logger.log(Level.FINE, "failure during url completion", e)
-    }
-  }
-
-  private suspend fun buildCompletions(arguments: List<String>): List<String> {
-    val line = arguments.getOrElse(0) { "" }
-    val current = arguments.getOrNull(1)
-    val editPos = arguments.getOrNull(2)?.toInt() ?: line.length
-
-    val parts = line.split(" ")
-
-    return if (parts.size > 1) {
-      argumentCompletionQuery(line).completions
-    } else {
-      commandCompletionQuery(parts.getOrElse(0) { "" }).completions
-    }
-  }
 
   private fun printVersion() {
     outputHandler.info(name() + " " + versionString())
@@ -300,12 +280,6 @@ class Main : ToolSession {
 
   private suspend fun bounceQuery(runArguments: List<String>) =
     client.query<GoResult>("${apiHost()}/api/v0/goinfo?q=${runArguments.joinToString(" ")}")
-
-  private suspend fun commandCompletionQuery(query: String) =
-    client.query<CompletionResult>("${apiHost()}/api/v0/command-completion?q=$query")
-
-  private suspend fun argumentCompletionQuery(query: String) =
-    client.query<CompletionResult>("${apiHost()}/api/v0/argument-completion?q=$query")
 
   private fun apiHost() = when {
     local -> "http://localhost:8080"
