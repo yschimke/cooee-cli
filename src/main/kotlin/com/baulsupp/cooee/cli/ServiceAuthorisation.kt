@@ -4,7 +4,6 @@ import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.AuthInterceptor
 import com.baulsupp.okurl.commands.ToolSession
 import com.baulsupp.okurl.credentials.TokenSet
-import com.baulsupp.okurl.kotlin.query
 import com.baulsupp.okurl.kotlin.queryForString
 import com.baulsupp.okurl.kotlin.request
 import com.baulsupp.okurl.secrets.Secrets

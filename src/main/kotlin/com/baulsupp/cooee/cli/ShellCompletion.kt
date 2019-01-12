@@ -28,10 +28,9 @@ class ShellCompletion(val tool: ToolSession, val apiHost: String, val shell: She
   }
 
   suspend fun completionQuery(query: String) =
-    tool.client.query<CompletionResult>("${apiHost}/api/v0/completion?q=${query.replace(" ", "+")}")
+    tool.client.query<CompletionResult>("$apiHost/api/v0/completion?q=${query.replace(" ", "+")}")
 
   companion object {
     private val logger = Logger.getLogger(ShellCompletion::class.java.name)
   }
 }
-

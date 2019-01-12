@@ -30,6 +30,8 @@ import com.github.rvesse.airline.annotations.Command
 import com.github.rvesse.airline.annotations.Option
 import com.github.rvesse.airline.help.Help
 import com.github.rvesse.airline.parser.errors.ParseException
+import io.jsonwebtoken.Claims
+import io.jsonwebtoken.Jwts
 import kotlinx.coroutines.CoroutineStart.ATOMIC
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -117,7 +119,11 @@ class Main : ToolSession {
       when {
         complete != null -> completeOption(complete!!)
         version -> printVersion()
-        commandComplete -> ShellCompletion(this@Main, apiHost(), Shell.BASH).completeCommand(arguments.joinToString(" "))
+        commandComplete -> ShellCompletion(
+          this@Main,
+          apiHost(),
+          Shell.BASH
+        ).completeCommand(arguments.joinToString(" "))
         fishComplete -> ShellCompletion(this@Main, apiHost(), Shell.FISH).completeCommand(arguments.joinToString(" "))
         login -> login()
         logout -> logout()
@@ -140,7 +146,16 @@ class Main : ToolSession {
 
     val token = Secrets.prompt("Cooee API Token", "cooee.token", "", true)
 
+    val jwt = parseClaims(token)
+    outputHandler.info("JWT: $jwt")
+
     credentialsStore.set(serviceDefinition, DefaultToken.name, Jwt(token))
+  }
+
+  private fun parseClaims(token: String): Claims? {
+    // TODO verify using public signing key
+    val unsignedToken = token.substring(0, token.lastIndexOf('.') + 1)
+    return Jwts.parser().parseClaimsJwt(unsignedToken).body
   }
 
   private suspend fun logout() {
@@ -156,7 +171,6 @@ class Main : ToolSession {
   }
 
   private val knownServices by lazy { AuthenticatingInterceptor.defaultServices() }
-
 
   private fun printVersion() {
     outputHandler.info(name() + " " + versionString())
