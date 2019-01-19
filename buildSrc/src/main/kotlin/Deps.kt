@@ -6,7 +6,7 @@ object Versions {
   val moshiVersion = "1.8.0"
   val okhttp = "3.12.1"
   val oksocialOutput = "4.25.0"
-  val okurl = "1.73.0"
+  val okurl = "1.74.0"
 }
 
 object Deps {

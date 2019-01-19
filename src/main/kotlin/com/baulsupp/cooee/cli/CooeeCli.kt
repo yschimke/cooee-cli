@@ -5,6 +5,7 @@ import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.Jwt
+import com.baulsupp.okurl.authenticator.SimpleWebServer
 import com.baulsupp.okurl.commands.ToolSession
 import com.baulsupp.okurl.credentials.CredentialFactory
 import com.baulsupp.okurl.credentials.CredentialsStore
@@ -142,14 +143,16 @@ class Main : ToolSession {
   private suspend fun login() {
     val web = webHost()
 
-    outputHandler.openLink("$web/user/jwt")
+    SimpleWebServer.forCode().use { s ->
+      outputHandler.openLink("$web/user/jwt?callback=${s.redirectUri}")
 
-    val token = Secrets.prompt("Cooee API Token", "cooee.token", "", true)
+      val token = s.waitForCode()
 
-    val jwt = parseClaims(token)
-    outputHandler.info("JWT: $jwt")
+      val jwt = parseClaims(token)
+      outputHandler.info("JWT: $jwt")
 
-    credentialsStore.set(serviceDefinition, DefaultToken.name, Jwt(token))
+      credentialsStore.set(serviceDefinition, DefaultToken.name, Jwt(token))
+    }
   }
 
   private fun parseClaims(token: String): Claims? {
