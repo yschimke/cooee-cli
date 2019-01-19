@@ -7,6 +7,7 @@ object Versions {
   val okhttp = "3.12.1"
   val oksocialOutput = "4.25.0"
   val okurl = "1.74.0"
+  val okio = "2.2.1"
 }
 
 object Deps {
@@ -31,7 +32,7 @@ object Deps {
   val moshiAdapters = "com.squareup.moshi:moshi-adapters:${Versions.moshiVersion}"
   val moshiKotlin = "com.squareup.moshi:moshi-kotlin:${Versions.moshiVersion}"
   val okhttp = "com.squareup.okhttp3:okhttp:${Versions.okhttp}"
-  val okio = "com.squareup.okio:okio:2.1.0"
+  val okio = "com.squareup.okio:okio:${Versions.okio}"
   val oksocialOutput = "com.baulsupp:oksocial-output:${Versions.oksocialOutput}"
   val okurl = "com.baulsupp:okurl:${Versions.okurl}"
   val slf4jApi = "org.slf4j:slf4j-api:1.8.0-beta2"
