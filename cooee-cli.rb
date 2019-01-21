@@ -16,5 +16,6 @@ class CooeeCli < Formula
     libexec.install Dir["build/install/cooee-cli/*"]
     bin.install_symlink "#{libexec}/bin/cooee-cli" => "cooee"
     bash_completion.install "#{libexec}/bash/completion.bash" => "cooee"
+    fish_completion.install "#{libexec}/fish/cooee.fish"
   end
 end

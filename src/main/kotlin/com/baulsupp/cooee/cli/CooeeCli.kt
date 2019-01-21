@@ -194,7 +194,7 @@ class Main : ToolSession {
 
   private suspend fun listOptions(option: String): Collection<String> {
     return when (option) {
-      "command-complete" -> listOf("command-complete", "authorize")
+      "option-complete" -> listOf("command-complete", "authorize", "add", "remove", "option-complete")
       "authorize" -> ProviderTools(client).list().flatMap { it.services }
       "add" -> ProviderTools(client).list().filter { !it.installed }.map { it.name }
       "remove" -> ProviderTools(client).list().filter { it.installed }.map { it.name }
@@ -211,7 +211,7 @@ class Main : ToolSession {
   }
 
   private suspend fun completeOption(complete: String) {
-    return outputHandler.info(listOptions(complete).toSortedSet().joinToString(" "))
+    return outputHandler.info(listOptions(complete).toSortedSet().joinToString("\n"))
   }
 
   private fun initialise() {
