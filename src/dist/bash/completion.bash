@@ -61,23 +61,35 @@ _cooee_complete()
             COMPREPLY=( $( compgen -W "${_cooee_complete}" -- "$cur" ) )
             return
             ;;
+        --add)
+            _cooee_complete=$(cooee --option-complete add)
+            COMPREPLY=( $( compgen -W "${_cooee_complete}" -- "$cur" ) )
+            return
+            ;;
+        --remove)
+            _cooee_complete=$(cooee --option-complete remove)
+            COMPREPLY=( $( compgen -W "${_cooee_complete}" -- "$cur" ) )
+            return
+            ;;
   esac
 
   if [[ ${cur} == -* ]]; then
       # TODO parse help automatically
       #_cooee_options=${_cooee_options:=$(_parse_help cooee --help)}
-      _cooee_options="-h --help -V --version -l --local --command-complete --option-complete --debug --login --logout --authorize"
+      _cooee_options="-h --help -V --version -l --local --command-complete --option-complete --debug --login --logout --authorize --add --remove --list"
       COMPREPLY=( $( compgen -W "$_cooee_options" -- "$cur" ) )
       return;
   fi
 
-  cache_file=$TMPDIR/cooee-complete.cache
+  cache_file="${TMPDIR}cooee-complete.cache"
+
+  _cooee_debug $cache_file
 
   if _cooee_is_cache_valid ${cache_file} ${COMP_POINT} "$line"; then
     _cooee_commands=$(tail -n +3 ${cache_file})
   else
     _cooee_debug "running"
-    _cooee_commands=$(cooee --command-complete "$line" "$cur" "$COMP_POINT")
+    _cooee_commands=$(cooee --command-complete "$line")
     echo "$COMP_POINT" > $cache_file
     echo "$line" >> $cache_file
     echo "$_cooee_commands" >> $cache_file
