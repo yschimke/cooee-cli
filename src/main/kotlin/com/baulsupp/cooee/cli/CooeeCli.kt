@@ -11,6 +11,7 @@ import com.baulsupp.okurl.credentials.CredentialFactory
 import com.baulsupp.okurl.credentials.CredentialsStore
 import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.credentials.TokenSet
+import com.baulsupp.okurl.kotlin.JSON
 import com.baulsupp.okurl.kotlin.edit
 import com.baulsupp.okurl.kotlin.execute
 import com.baulsupp.okurl.kotlin.query
@@ -96,6 +97,15 @@ class Main : ToolSession {
   @Option(name = ["--tokenSet"], description = "Token Set")
   override var defaultTokenSet: TokenSet = DefaultToken
 
+  @Option(name = ["--add"], description = "Add Provider")
+  var addProvider: String? = null
+
+  @Option(name = ["--remove"], description = "Add Provider")
+  var removeProvider: String? = null
+
+  @Option(name = ["--list"], description = "Add Provider")
+  var listProvider = false
+
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
@@ -129,11 +139,28 @@ class Main : ToolSession {
         login -> login()
         logout -> logout()
         authorize != null -> authorize()
+        addProvider != null -> addProvider()
+        removeProvider != null -> removeProvider()
+        listProvider -> listProviders()
         else -> cooeeCommand(arguments)
       }
     }
 
     return 0
+  }
+
+  private suspend fun addProvider() {
+    ProviderTools(client).add(this.addProvider!!, ProviderRequest(mapOf()))
+  }
+
+  private suspend fun removeProvider() {
+    ProviderTools(client).remove(this.removeProvider!!)
+  }
+
+  private suspend fun listProviders() {
+    ProviderTools(client).list().forEach {
+      outputHandler.info(it.name + "\t" + (if (it.installed) "installed" else "not installed"))
+    }
   }
 
   private suspend fun authorize() {
@@ -165,15 +192,15 @@ class Main : ToolSession {
     credentialsStore.remove(serviceDefinition, DefaultToken.name)
   }
 
-  private fun listOptions(option: String): Collection<String> {
+  private suspend fun listOptions(option: String): Collection<String> {
     return when (option) {
       "command-complete" -> listOf("command-complete", "authorize")
-      "authorize" -> knownServices.map { it.serviceDefinition.shortName() }
+      "authorize" -> ProviderTools(client).list().flatMap { it.services }
+      "add" -> ProviderTools(client).list().filter { !it.installed }.map { it.name }
+      "remove" -> ProviderTools(client).list().filter { it.installed }.map { it.name }
       else -> listOf()
     }
   }
-
-  private val knownServices by lazy { AuthenticatingInterceptor.defaultServices() }
 
   private fun printVersion() {
     outputHandler.info(name() + " " + versionString())
@@ -183,7 +210,7 @@ class Main : ToolSession {
     return "cooee"
   }
 
-  private fun completeOption(complete: String) {
+  private suspend fun completeOption(complete: String) {
     return outputHandler.info(listOptions(complete).toSortedSet().joinToString(" "))
   }
 
@@ -280,6 +307,7 @@ class Main : ToolSession {
           outputHandler.info(result.message)
         }
         if (result.location != null) {
+          @Suppress("EXPERIMENTAL_API_USAGE")
           launch(start = ATOMIC) {
             outputHandler.openLink(result.location)
           }
@@ -330,6 +358,7 @@ class Main : ToolSession {
 
     return try {
       runCommand(arguments)
+      0
     } catch (e: UsageException) {
       outputHandler.showError(e.message)
       -1
