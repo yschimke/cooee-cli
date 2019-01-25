@@ -1,5 +1,6 @@
 package com.baulsupp.cooee.cli
 
+import com.baulsupp.cooee.cli.repl.Repl
 import com.baulsupp.oksocial.output.ConsoleHandler
 import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
@@ -106,6 +107,9 @@ class Main : ToolSession {
   @Option(name = ["--list"], description = "Add Provider")
   var listProvider = false
 
+  @Option(name = ["--repl"], description = "Repl")
+  var repl = false
+
   @Arguments(title = ["arguments"], description = "Remote resource URLs")
   var arguments: MutableList<String> = ArrayList()
 
@@ -142,11 +146,17 @@ class Main : ToolSession {
         addProvider != null -> addProvider()
         removeProvider != null -> removeProvider()
         listProvider -> listProviders()
+        repl -> launchRepl()
         else -> cooeeCommand(arguments)
       }
     }
 
     return 0
+  }
+
+  private fun launchRepl() {
+    val repl = Repl(this, apiHost())
+    repl.run()
   }
 
   private suspend fun addProvider() {
@@ -294,7 +304,7 @@ class Main : ToolSession {
     return builder
   }
 
-  private suspend fun cooeeCommand(runArguments: List<String>): Int {
+  suspend fun cooeeCommand(runArguments: List<String>): Int {
     return coroutineScope {
       val result = bounceQuery(runArguments)
 

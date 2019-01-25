@@ -72,6 +72,7 @@ dependencies {
   implementation(Deps.oksocialOutput)
   implementation(Deps.okurl)
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:${Versions.kotlinCoroutines}")
+  implementation("org.jline:jline:3.9.0")
 
   testImplementation(Deps.kotlinTest)
   testImplementation(Deps.kotlinTestJunit)
