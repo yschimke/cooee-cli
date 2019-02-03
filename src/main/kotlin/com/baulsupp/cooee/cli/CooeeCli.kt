@@ -49,6 +49,8 @@ import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.Closeable
+import java.time.Duration
+import java.time.Duration.*
 import java.util.ArrayList
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -276,6 +278,8 @@ class Main : ToolSession {
 
   private fun createClientBuilder(): OkHttpClient.Builder {
     val builder = OkHttpClient.Builder()
+      .callTimeout(ofSeconds(15)).connectTimeout(ofSeconds(15))
+      .readTimeout(ofSeconds(15)).writeTimeout(ofSeconds(15))
 
     if (debug) {
       val loggingInterceptor = HttpLoggingInterceptor()
@@ -304,8 +308,8 @@ class Main : ToolSession {
     return builder
   }
 
-  suspend fun cooeeCommand(runArguments: List<String>): Int {
-    return coroutineScope {
+  suspend fun cooeeCommand(runArguments: List<String>): Int = coroutineScope {
+    try {
       val result = bounceQuery(runArguments)
 
       if (result.location != null || result.message != null || result.image != null) {
@@ -330,6 +334,11 @@ class Main : ToolSession {
         outputHandler.showError("No results found")
         -1
       }
+    } catch (ce: ClientException) {
+      val message = ce.responseMessage
+      outputHandler.showError(message = message)
+
+      -2
     }
   }
 
