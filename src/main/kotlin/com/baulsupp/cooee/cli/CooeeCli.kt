@@ -224,7 +224,7 @@ class Main : ToolSession {
     return outputHandler.info(listOptions(complete).toSortedSet().joinToString("\n"))
   }
 
-  private fun initialise() {
+  fun initialise() {
     System.setProperty("apple.awt.UIElement", "true")
 
     if (!this::outputHandler.isInitialized) {
@@ -338,14 +338,12 @@ class Main : ToolSession {
 
   private fun apiHost() = when {
     local -> "http://localhost:8080"
-    Preferences.local.api != null -> Preferences.local.api!!
-    else -> "https://api.coo.ee"
+    else -> Preferences.local.api!!
   }
 
   private fun webHost() = when {
     local -> "http://localhost:5000"
-    Preferences.local.web != null -> Preferences.local.web!!
-    else -> "https://www.coo.ee"
+    else -> Preferences.local.web!!
   }
 
   private fun versionString(): String {
