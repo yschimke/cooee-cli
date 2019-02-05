@@ -1,7 +1,6 @@
 package com.baulsupp.cooee.cli.repl
 
 import com.baulsupp.cooee.cli.Main
-import com.baulsupp.okurl.credentials.TokenValue
 import com.baulsupp.okurl.kotlin.query
 import kotlinx.coroutines.runBlocking
 import org.jline.reader.EndOfFileException
