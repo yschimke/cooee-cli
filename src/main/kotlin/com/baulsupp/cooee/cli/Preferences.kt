@@ -22,7 +22,7 @@ data class Proxy(val host: String? = null, val port: Int = 8080, val user: Strin
 data class Preferences(
   val api: String = "https://api.coo.ee",
   val web: String = "https://www.coo.ee",
-  val proxy: Proxy = Proxy(),
+  val proxy: Proxy? = null,
   val descriptionLength: Int = 20
 ) {
   companion object {

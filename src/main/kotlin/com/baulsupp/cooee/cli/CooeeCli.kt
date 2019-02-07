@@ -12,7 +12,6 @@ import com.baulsupp.okurl.credentials.CredentialFactory
 import com.baulsupp.okurl.credentials.CredentialsStore
 import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.credentials.TokenSet
-import com.baulsupp.okurl.kotlin.JSON
 import com.baulsupp.okurl.kotlin.edit
 import com.baulsupp.okurl.kotlin.execute
 import com.baulsupp.okurl.kotlin.query
@@ -20,7 +19,6 @@ import com.baulsupp.okurl.kotlin.request
 import com.baulsupp.okurl.location.BestLocation
 import com.baulsupp.okurl.location.LocationSource
 import com.baulsupp.okurl.okhttp.OkHttpResponseExtractor
-import com.baulsupp.okurl.secrets.Secrets
 import com.baulsupp.okurl.services.ServiceLibrary
 import com.baulsupp.okurl.services.cooee.CooeeAuthInterceptor
 import com.baulsupp.okurl.util.ClientException
@@ -49,7 +47,6 @@ import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.Closeable
-import java.time.Duration
 import java.time.Duration.*
 import java.util.ArrayList
 import java.util.logging.Level
@@ -131,7 +128,7 @@ class Main : ToolSession {
 
   private val serviceDefinition = CooeeAuthInterceptor().serviceDefinition
 
-  fun runCommand(runArguments: List<String>): Int {
+  fun runCommand(): Int {
     runBlocking {
       when {
         complete != null -> completeOption(complete!!)
@@ -347,12 +344,12 @@ class Main : ToolSession {
 
   private fun apiHost() = when {
     local -> "http://localhost:8080"
-    else -> Preferences.local.api!!
+    else -> Preferences.local.api
   }
 
   private fun webHost() = when {
     local -> "http://localhost:5000"
-    else -> Preferences.local.web!!
+    else -> Preferences.local.web
   }
 
   private fun versionString(): String {
@@ -374,7 +371,7 @@ class Main : ToolSession {
     }
 
     return try {
-      runCommand(arguments)
+      runCommand()
       0
     } catch (e: UsageException) {
       outputHandler.showError(e.message)
