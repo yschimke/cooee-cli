@@ -14,12 +14,21 @@ class ShellCompletion(val tool: ToolSession, val apiHost: String, val shell: She
   suspend fun completeCommand(line: String) {
     try {
       val completionList: CompletionResult = completionQuery(line)
-      tool.outputHandler.info(completionList.completions.joinToString("\n") {
-        when (shell) {
-          Shell.FISH -> "${it.line}\t${it.description}"
-          else -> it.word
-        }
-      })
+      if (completionList.completions != null) {
+        tool.outputHandler.info(completionList.completions.joinToString("\n") {
+          when (shell) {
+            Shell.FISH -> "${it.line}\t${it.description}"
+            else -> it.word
+          }
+        })
+      } else {
+        tool.outputHandler.info(completionList.suggestions!!.joinToString("\n") {
+          when (shell) {
+            Shell.FISH -> "${it.line}\t${it.description}"
+            else -> it.line.split("\\s+".toRegex()).last()
+          }
+        })
+      }
     } catch (ue: UsageException) {
       throw ue
     } catch (e: Exception) {

@@ -173,7 +173,12 @@ class Main : ToolSession {
   }
 
   private suspend fun authorize() {
-    ServiceAuthorisation(this, apiHost()).authorize(authorize!!, token, defaultTokenSet)
+    val token = cooeeToken()?.token
+    if (authorize == "strava") {
+      outputHandler.openLink("${apiHost()}/web/authenticate/$authorize?token=$token")
+    } else {
+      ServiceAuthorisation(this, apiHost()).authorize(authorize!!, token, defaultTokenSet)
+    }
   }
 
   private suspend fun login() {
@@ -291,7 +296,7 @@ class Main : ToolSession {
         header("User-Agent", "cooee-cli/" + versionString())
 
         if (local && it.request().url().host() == "localhost") {
-          val token = runBlocking { credentialsStore.get(serviceDefinition, DefaultToken) }
+          val token = runBlocking { cooeeToken() }
 
           if (token != null) {
             header("Authorization", "Bearer ${token.token}")
@@ -304,6 +309,8 @@ class Main : ToolSession {
 
     return builder
   }
+
+  private suspend fun cooeeToken() = credentialsStore.get(serviceDefinition, DefaultToken)
 
   suspend fun cooeeCommand(runArguments: List<String>): Int = coroutineScope {
     try {

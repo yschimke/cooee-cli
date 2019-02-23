@@ -1,6 +1,5 @@
 package com.baulsupp.cooee.cli.repl
 
-import com.baulsupp.cooee.cli.CompletionItem
 import com.baulsupp.cooee.cli.CompletionResult
 import com.baulsupp.cooee.cli.Main
 import com.baulsupp.cooee.cli.Preferences
@@ -19,17 +18,29 @@ class CooeeCompleter(val tool: Main, val apiHost: String) : Completer {
     runBlocking {
       val completions = completionQuery(line.line())
 
-      completions.completions.forEach {
-        candidates.add(Candidate(it.word, it.line, it.provider, truncateDescription(it), null, null, true))
+      if (completions.completions != null) {
+        completions.completions.forEach {
+          candidates.add(
+            Candidate(it.word, it.line, it.provider, truncateDescription(it.description), null,
+              null, true))
+        }
+      } else {
+        completions.suggestions!!.forEach {
+          val word = it.line.split("\\s+".toRegex()).last()
+          candidates.add(
+            Candidate(word, it.line, it.provider, truncateDescription(it.description), null, null,
+              true))
+        }
       }
     }
   }
 
-  private fun truncateDescription(it: CompletionItem): String {
+  private fun truncateDescription(description: String): String {
     val maxDescription = Preferences.local.descriptionLength
     return when {
-      maxDescription >= 0 && it.description.length > maxDescription -> it.description.substring(0, maxDescription)
-      else -> it.description
+      maxDescription >= 0 && description.length > maxDescription -> description.substring(0,
+        maxDescription)
+      else -> description
     }
   }
 }
