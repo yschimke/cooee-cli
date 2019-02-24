@@ -31,9 +31,13 @@ class Repl(val tool: Main, val apiHost: String) {
     })
 
     val reader =
-      LineReaderBuilder.builder().terminal(terminal).history(history).completer(CooeeCompleter(tool, apiHost)).variable(
-        LineReader.HISTORY_FILE, File(System.getenv("HOME"), ".cooee/repl.hist")
-      ).build()
+      LineReaderBuilder.builder().terminal(terminal).history(history)
+        .option(LineReader.Option.CASE_INSENSITIVE, true)
+        .option(LineReader.Option.CASE_INSENSITIVE_SEARCH, true)
+        .completer(CooeeCompleter(tool, apiHost))
+        .variable(
+          LineReader.HISTORY_FILE, File(System.getenv("HOME"), ".cooee/repl.hist")
+        ).build()
     history.attach(reader)
 
     val prompt = buildPrompt()
