@@ -16,6 +16,7 @@ complete -c cooee -s h -l help -d 'Help options'
 complete -c cooee -l login -d 'Login and link account'
 complete -c cooee -l logout -d 'Unlink account'
 complete -c cooee -s V -l version -d 'Output version and exit'
+complete -c cooee -l repl -d 'REPL'
 
 complete -c cooee -l list -d 'List apps'
 complete -c cooee -l add -x -d 'Add app' -a '(cooee --option-complete add)'
