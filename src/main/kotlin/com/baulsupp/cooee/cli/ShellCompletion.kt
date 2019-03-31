@@ -7,27 +7,38 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 enum class Shell {
-  BASH, FISH
+  BASH,
+  FISH
 }
 
 class ShellCompletion(val tool: ToolSession, val apiHost: String, val shell: Shell) {
   suspend fun completeCommand(line: String) {
     try {
-      val completionList: CompletionResult = completionQuery(line)
-      if (completionList.completions != null) {
-        tool.outputHandler.info(completionList.completions.joinToString("\n") {
-          when (shell) {
-            Shell.FISH -> "${it.line}\t${it.description}"
-            else -> it.word
-          }
-        })
-      } else {
-        tool.outputHandler.info(completionList.suggestions!!.joinToString("\n") {
+      if (line.isNullOrEmpty()) {
+        val completionList: TodoResult = todoQuery()
+        tool.outputHandler.info(completionList.todos.joinToString("\n") {
           when (shell) {
             Shell.FISH -> "${it.line}\t${it.description}"
             else -> it.line.split("\\s+".toRegex()).last()
           }
         })
+      } else {
+        val completionList: CompletionResult = completionQuery(line)
+        if (completionList.completions != null) {
+          tool.outputHandler.info(completionList.completions.joinToString("\n") {
+            when (shell) {
+              Shell.FISH -> "${it.line}\t${it.description}"
+              else -> it.word
+            }
+          })
+        } else {
+          tool.outputHandler.info(completionList.suggestions!!.joinToString("\n") {
+            when (shell) {
+              Shell.FISH -> "${it.line}\t${it.description}"
+              else -> it.line.split("\\s+".toRegex()).last()
+            }
+          })
+        }
       }
     } catch (ue: UsageException) {
       throw ue
@@ -35,6 +46,9 @@ class ShellCompletion(val tool: ToolSession, val apiHost: String, val shell: She
       logger.log(Level.FINE, "failure during url completion", e)
     }
   }
+
+  suspend fun todoQuery() =
+    tool.client.query<TodoResult>("$apiHost/api/v0/todo")
 
   suspend fun completionQuery(query: String) =
     tool.client.query<CompletionResult>("$apiHost/api/v0/completion?q=${query.replace(" ", "+")}")

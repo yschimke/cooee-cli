@@ -44,8 +44,11 @@ class Repl(val tool: Main, val apiHost: String) {
     while (true) {
       try {
         val line = reader.readLine(prompt)
-        runBlocking {
-          runCommand(line)
+
+        if (line.trim() != "") {
+          runBlocking {
+            runCommand(line)
+          }
         }
       } catch (e: UserInterruptException) {
         // Ignore

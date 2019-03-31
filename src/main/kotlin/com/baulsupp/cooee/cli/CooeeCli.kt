@@ -146,6 +146,7 @@ class Main : ToolSession {
         removeProvider != null -> removeProvider()
         listProvider -> listProviders()
         repl -> launchRepl()
+        arguments.isEmpty() || arguments == listOf("") -> {}
         else -> cooeeCommand(arguments)
       }
     }

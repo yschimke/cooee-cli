@@ -21,3 +21,4 @@ data class Suggestion(
 data class GoResult(val location: String?, val message: String?, val image: String?)
 data class CompletionItem(val word: String, val line: String, val description: String, val provider: String)
 data class CompletionResult(val completions: List<CompletionItem>?, val suggestions: List<Suggestion>?)
+data class TodoResult(val todos: List<Suggestion>)
