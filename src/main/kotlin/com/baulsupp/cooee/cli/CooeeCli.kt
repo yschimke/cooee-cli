@@ -287,7 +287,7 @@ class Main : ToolSession {
     if (debug) {
       val loggingInterceptor = HttpLoggingInterceptor()
       loggingInterceptor.level = HttpLoggingInterceptor.Level.HEADERS
-      builder.networkInterceptors().add(loggingInterceptor)
+      builder.addNetworkInterceptor(loggingInterceptor)
     }
 
     applyProxy(builder)

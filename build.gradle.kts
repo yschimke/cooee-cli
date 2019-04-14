@@ -1,17 +1,14 @@
-import com.jfrog.bintray.gradle.BintrayExtension
-import org.gradle.api.publish.maven.MavenPom
-import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
   kotlin("jvm") version Versions.kotlin
   application
   id("com.github.ben-manes.versions") version "0.20.0"
-  id("org.jlleitschuh.gradle.ktlint") version "6.3.1"
   id("com.jfrog.bintray") version "1.8.4"
   id("org.jetbrains.dokka") version "0.9.17"
   id("net.nemerosa.versioning") version "2.8.2"
+  id("com.palantir.consistent-versions") version "1.5.0"
+  id("com.diffplug.gradle.spotless") version "3.21.1"
 }
 
 repositories {
@@ -21,6 +18,7 @@ repositories {
   maven(url = "http://repo.maven.apache.org/maven2")
   maven(url = "https://dl.bintray.com/kotlin/kotlin-eap/")
   maven(url = "https://dl.bintray.com/yschimke/baulsupp.com/")
+  maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
 }
 
 group = "com.baulsupp"
@@ -59,24 +57,32 @@ tasks.create("downloadDependencies") {
   }
 }
 
+spotless {
+  kotlinGradle {
+    ktlint("0.31.0").userData(mutableMapOf("indent_size" to "2", "continuation_indent_size" to "2"))
+    trimTrailingWhitespace()
+    endWithNewline()
+  }
+}
+
 dependencies {
-  implementation(Deps.airline2)
-  implementation(Deps.coroutinesCore)
-  implementation(Deps.kotlinReflect)
-  implementation(Deps.kotlinStandardLibrary)
-  implementation(Deps.moshi)
-  implementation(Deps.moshiAdapters)
-  implementation(Deps.moshiKotlin)
-  implementation(Deps.okhttp)
-  implementation(Deps.okio)
-  implementation(Deps.oksocialOutput)
-  implementation(Deps.okurl)
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:${Versions.kotlinCoroutines}")
-  implementation("org.jline:jline:3.9.0")
+  implementation("com.github.rvesse:airline")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+  implementation("org.jetbrains.kotlin:kotlin-reflect")
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+  implementation("com.squareup.moshi:moshi")
+  implementation("com.squareup.moshi:moshi-adapters")
+  implementation("com.squareup.moshi:moshi-kotlin")
+  implementation("com.squareup.okhttp3:okhttp")
+  implementation("com.squareup.okio:okio")
+  implementation("com.baulsupp:oksocial-output")
+  implementation("com.baulsupp:okurl")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug")
+  implementation("org.jline:jline")
 
-  testImplementation(Deps.kotlinTest)
-  testImplementation(Deps.kotlinTestJunit)
+  testImplementation("org.jetbrains.kotlin:kotlin-test")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 
-  testRuntime(Deps.junitJupiterEngine)
-  testRuntime(Deps.slf4jJdk14)
+  testRuntime("org.junit.jupiter:junit-jupiter-engine")
+  testRuntime("org.slf4j:slf4j-jdk14")
 }
