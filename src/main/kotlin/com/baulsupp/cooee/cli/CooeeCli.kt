@@ -419,7 +419,9 @@ private fun fromArgs(vararg args: String): Main {
 
 @ExperimentalCoroutinesApi
 suspend fun main(vararg args: String) {
-  DebugProbes.install()
+//  DebugProbes.install()
 
   fromArgs(*args).run()
+
+  exitProcess(-1)
 }
