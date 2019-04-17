@@ -404,22 +404,29 @@ class Main : ToolSession {
       }
     }
   }
-}
 
-private fun fromArgs(vararg args: String): Main {
-  val cmd = SingleCommand.singleCommand<Main>(Main::class.java)
-  return try {
-    cmd.parse(*args)
-  } catch (e: ParseException) {
-    System.err.println(e.message)
-    Help.help(cmd.commandMetadata)
-    exitProcess(-1)
+  companion object {
+
+    private fun fromArgs(vararg args: String): Main {
+      val cmd = SingleCommand.singleCommand<Main>(Main::class.java)
+      return try {
+        cmd.parse(*args)
+      } catch (e: ParseException) {
+        System.err.println(e.message)
+        Help.help(cmd.commandMetadata)
+        exitProcess(-1)
+      }
+    }
+
+    @JvmStatic
+    fun main(vararg args: String) {
+//  DebugProbes.install()
+
+      runBlocking {
+        fromArgs(*args).run()
+      }
+
+      exitProcess(-1)
+    }
   }
-}
-
-@ExperimentalCoroutinesApi
-suspend fun main(vararg args: String) {
-  DebugProbes.install()
-
-  fromArgs(*args).run()
 }
