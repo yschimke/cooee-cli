@@ -31,7 +31,7 @@ version = projectVersion
 
 application {
   // Define the main class for the application
-  mainClassName = "com.baulsupp.cooee.cli.CooeeCliKt"
+  mainClassName = "com.baulsupp.cooee.cli.Main"
 }
 
 java {
@@ -63,7 +63,7 @@ tasks.create("downloadDependencies") {
 
 graal {
   graalVersion("1.0.0-rc15")
-  mainClass("com.baulsupp.cooee.cli.CooeeCliKt")
+  mainClass("com.baulsupp.cooee.cli.Main")
   outputName("cooee")
   option("--configurations-path")
   option("graal.config")
