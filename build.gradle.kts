@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.internal.os.OperatingSystem
 
 plugins {
   kotlin("jvm") version Versions.kotlin
@@ -7,8 +8,8 @@ plugins {
   id("com.jfrog.bintray") version "1.8.4"
   id("org.jetbrains.dokka") version "0.9.18"
   id("net.nemerosa.versioning") version "2.8.2"
-  id("com.palantir.consistent-versions") version "1.5.0"
-  id("com.diffplug.gradle.spotless") version "3.21.1"
+  id("com.palantir.consistent-versions") version "1.8.0"
+  id("com.diffplug.gradle.spotless") version "3.23.0"
   id("com.palantir.graal") version "0.3.0-6-g0b828af"
   id("com.hpe.kraal") version "0.0.15"
 }
@@ -61,12 +62,28 @@ tasks.create("downloadDependencies") {
   }
 }
 
+val os = "darwin"
+//if (OperatingSystem.current().isMacOsX) {
+//  "darwin"
+//} else {
+//  "linux"
+//}
+
 graal {
-  graalVersion("1.0.0-rc15")
+  graalVersion("19.0.2")
+  // https://github.com/palantir/gradle-graal/issues/105
+  downloadBaseUrl("https://github.com/oracle/graal/releases/download/vm-19.0.2/graalvm-ce-$os-amd64-19.0.2.tar.gz?a=")
   mainClass("com.baulsupp.cooee.cli.Main")
   outputName("cooee")
-  option("--configurations-path")
-  option("graal.config")
+  option("--allow-incomplete-classpath")
+  option("--enable-all-security-services")
+  option("--report-unsupported-elements-at-runtime")
+  option("--auto-fallback")
+  option("--enable-http")
+  option("--enable-https")
+  option("-H:+AddAllCharsets")
+  option("-H:ReflectionConfigurationFiles=reflect.config")
+  option("-H:+ReportExceptionStackTraces")
 }
 
 spotless {
@@ -78,7 +95,7 @@ spotless {
 }
 
 dependencies {
-  implementation("com.github.rvesse:airline")
+  implementation("info.picocli:picocli")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

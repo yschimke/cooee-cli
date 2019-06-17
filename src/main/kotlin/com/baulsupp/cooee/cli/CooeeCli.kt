@@ -24,21 +24,12 @@ import com.baulsupp.okurl.services.cooee.CooeeAuthInterceptor
 import com.baulsupp.okurl.util.ClientException
 import com.baulsupp.okurl.util.LoggingUtil.Companion.configureLogging
 import com.github.markusbernhardt.proxy.ProxySearch
-import com.github.rvesse.airline.HelpOption
-import com.github.rvesse.airline.SingleCommand
-import com.github.rvesse.airline.annotations.Arguments
-import com.github.rvesse.airline.annotations.Command
-import com.github.rvesse.airline.annotations.Option
-import com.github.rvesse.airline.help.Help
-import com.github.rvesse.airline.parser.errors.ParseException
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import kotlinx.coroutines.CoroutineStart.ATOMIC
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType
@@ -46,12 +37,13 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
+import picocli.CommandLine
+import picocli.CommandLine.*
 import java.io.Closeable
-import java.time.Duration.*
+import java.time.Duration.ofSeconds
 import java.util.ArrayList
 import java.util.logging.Level
 import java.util.logging.Logger
-import javax.inject.Inject
 import kotlin.system.exitProcess
 
 val emptyBody = RequestBody.create(MediaType.get("text/plain"), "")
@@ -59,57 +51,52 @@ val emptyBody = RequestBody.create(MediaType.get("text/plain"), "")
 /**
  * Simple command line tool to make a Coo.ee command.
  */
-@Command(name = "cooee", description = "CLI for Coo.ee")
-class Main : ToolSession {
-  @Inject
-  var help: HelpOption<Main>? = null
-
-  @Option(name = ["-V", "--version"], description = "Show version number and quit")
-  var version = false
-
-  @Option(name = ["-l", "--local"], description = "Use local server")
+@Command(name = "cooee", description = ["CLI for Coo.ee"],
+  mixinStandardHelpOptions = true, version = ["dev"])
+class Main : ToolSession, Runnable {
+  @Option(names = ["-l", "--local"], description = ["Use local server"])
   var local = false
 
-  @Option(name = ["--option-complete"], description = "Complete options")
+  @Option(names = ["--option-complete"], description = ["Complete options"])
   var complete: String? = null
 
-  @Option(name = ["--command-complete"], description = "Complete Command")
+  @Option(names = ["--command-complete"], description = ["Complete Command"])
   var commandComplete: Boolean = false
 
-  @Option(name = ["--fish-complete"], description = "Complete Command")
+  @Option(names = ["--fish-complete"], description = ["Complete Command"])
   var fishComplete: Boolean = false
 
-  @Option(name = ["--debug"], description = "Debug Output")
+  @Option(names = ["--debug"], description = ["Debug Output"])
   var debug: Boolean = false
 
-  @Option(name = ["--login"], description = "Login")
+  @Option(names = ["--login"], description = ["Login"])
   var login: Boolean = false
 
-  @Option(name = ["--logout"], description = "Logout")
+  @Option(names = ["--logout"], description = ["Logout"])
   var logout: Boolean = false
 
-  @Option(name = ["--authorize"], description = "Authorize Service")
+  @Option(names = ["--authorize"], description = ["Authorize Service"])
   var authorize: String? = null
 
-  @Option(name = ["--token"], description = "Auth Token")
+  @Option(names = ["--token"], description = ["Auth Token"])
   var token: String? = null
 
-  @Option(name = ["--tokenSet"], description = "Token Set")
+  @Option(names = ["--tokenSet"], description = ["Token Set"])
   override var defaultTokenSet: TokenSet = DefaultToken
 
-  @Option(name = ["--add"], description = "Add Provider")
+  @Option(names = ["--add"], description = ["Add Provider"])
   var addProvider: String? = null
 
-  @Option(name = ["--remove"], description = "Add Provider")
+  @Option(names = ["--remove"], description = ["Add Provider"])
   var removeProvider: String? = null
 
-  @Option(name = ["--list"], description = "Add Provider")
+  @Option(names = ["--list"], description = ["Add Provider"])
   var listProvider = false
 
-  @Option(name = ["--repl"], description = "Repl")
+  @Option(names = ["--repl"], description = ["Repl"])
   var repl = false
 
-  @Arguments(title = ["arguments"], description = "Remote resource URLs")
+  @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
   var arguments: MutableList<String> = ArrayList()
 
   override lateinit var client: OkHttpClient
@@ -132,13 +119,13 @@ class Main : ToolSession {
     runBlocking {
       when {
         complete != null -> completeOption(complete!!)
-        version -> printVersion()
         commandComplete -> ShellCompletion(
           this@Main,
           apiHost(),
           Shell.BASH
         ).completeCommand(arguments.joinToString(" "))
-        fishComplete -> ShellCompletion(this@Main, apiHost(), Shell.FISH).completeCommand(arguments.joinToString(" "))
+        fishComplete -> ShellCompletion(this@Main, apiHost(), Shell.FISH).completeCommand(
+          arguments.joinToString(" "))
         login -> login()
         logout -> logout()
         authorize != null -> authorize()
@@ -146,7 +133,8 @@ class Main : ToolSession {
         removeProvider != null -> removeProvider()
         listProvider -> listProviders()
         repl -> launchRepl()
-        arguments.isEmpty() || arguments == listOf("") -> {}
+        arguments.isEmpty() || arguments == listOf("") -> {
+        }
         else -> cooeeCommand(arguments)
       }
     }
@@ -209,7 +197,8 @@ class Main : ToolSession {
 
   private suspend fun listOptions(option: String): Collection<String> {
     return when (option) {
-      "option-complete" -> listOf("command-complete", "authorize", "add", "remove", "option-complete")
+      "option-complete" -> listOf("command-complete", "authorize", "add", "remove",
+        "option-complete")
       "authorize" -> ProviderTools(client).list().flatMap { it.services }
       "add" -> ProviderTools(client).list().filter { !it.installed }.map { it.name }
       "remove" -> ProviderTools(client).list().filter { it.installed }.map { it.name }
@@ -364,34 +353,17 @@ class Main : ToolSession {
     return this.javaClass.`package`.implementationVersion ?: "dev"
   }
 
-  suspend fun run(): Int {
-    if (help?.showHelpIfRequested() == true) {
-      return 0
-    }
-
+  override fun run() {
     configureLogging(debug, false, false)
 
     initialise()
 
-    if (version) {
-      outputHandler.info("cooee-cli " + versionString())
-      return 0
-    }
-
-    return try {
-      runCommand()
-      0
-    } catch (e: UsageException) {
-      outputHandler.showError(e.message)
-      -1
-    } catch (e: ClientException) {
-      outputHandler.showError(e.message)
-      -2
-    } catch (e: Exception) {
-      outputHandler.showError("unknown error", e)
-      -3
-    } finally {
-      close()
+    runBlocking {
+      try {
+        runCommand()
+      } finally {
+        close()
+      }
     }
   }
 
@@ -406,27 +378,9 @@ class Main : ToolSession {
   }
 
   companion object {
-
-    private fun fromArgs(vararg args: String): Main {
-      val cmd = SingleCommand.singleCommand<Main>(Main::class.java)
-      return try {
-        cmd.parse(*args)
-      } catch (e: ParseException) {
-        System.err.println(e.message)
-        Help.help(cmd.commandMetadata)
-        exitProcess(-1)
-      }
-    }
-
     @JvmStatic
     fun main(vararg args: String) {
-//  DebugProbes.install()
-
-      runBlocking {
-        fromArgs(*args).run()
-      }
-
-      exitProcess(-1)
+      exitProcess(CommandLine(Main()).execute(*args))
     }
   }
 }
