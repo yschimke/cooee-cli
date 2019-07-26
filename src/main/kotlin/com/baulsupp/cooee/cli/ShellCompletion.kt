@@ -1,8 +1,6 @@
 package com.baulsupp.cooee.cli
 
 import com.baulsupp.oksocial.output.UsageException
-import com.baulsupp.okurl.commands.ToolSession
-import com.baulsupp.okurl.kotlin.query
 import java.util.logging.Level
 import java.util.logging.Logger
 

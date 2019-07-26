@@ -1,9 +1,10 @@
 package com.baulsupp.cooee.cli.test
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.baulsupp.cooee.cli.Main
 
-@ExperimentalCoroutinesApi
-suspend fun main(args: Array<String>) {
-  val testArgs = "--command-completion"
-  com.baulsupp.cooee.cli.main(*testArgs.split(" ").toTypedArray())
+fun main() {
+//  println(ReflectionConfigGenerator.generateReflectionConfig(CommandLine.Model.CommandSpec.forAnnotatedObject(Main())))
+
+  val testArgs = ""
+  Main.main(*testArgs.split(" ").toTypedArray())
 }
