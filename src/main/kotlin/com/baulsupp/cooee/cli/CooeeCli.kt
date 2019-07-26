@@ -1,52 +1,28 @@
 package com.baulsupp.cooee.cli
 
-import com.baulsupp.cooee.cli.repl.Repl
+import com.baulsupp.cooee.cli.LoggingUtil.Companion.configureLogging
 import com.baulsupp.oksocial.output.ConsoleHandler
 import com.baulsupp.oksocial.output.OutputHandler
-import com.baulsupp.oksocial.output.UsageException
-import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
-import com.baulsupp.okurl.authenticator.Jwt
-import com.baulsupp.okurl.authenticator.SimpleWebServer
-import com.baulsupp.okurl.commands.ToolSession
-import com.baulsupp.okurl.credentials.CredentialFactory
-import com.baulsupp.okurl.credentials.CredentialsStore
-import com.baulsupp.okurl.credentials.DefaultToken
-import com.baulsupp.okurl.credentials.TokenSet
-import com.baulsupp.okurl.kotlin.edit
-import com.baulsupp.okurl.kotlin.execute
-import com.baulsupp.okurl.kotlin.query
-import com.baulsupp.okurl.kotlin.request
-import com.baulsupp.okurl.location.BestLocation
-import com.baulsupp.okurl.location.LocationSource
-import com.baulsupp.okurl.okhttp.OkHttpResponseExtractor
-import com.baulsupp.okurl.services.ServiceLibrary
-import com.baulsupp.okurl.services.cooee.CooeeAuthInterceptor
-import com.baulsupp.okurl.util.ClientException
-import com.baulsupp.okurl.util.LoggingUtil.Companion.configureLogging
-import com.github.markusbernhardt.proxy.ProxySearch
+import com.baulsupp.oksocial.output.ToStringResponseExtractor
+import com.baulsupp.oksocial.output.process.exec
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
-import kotlinx.coroutines.CoroutineStart.ATOMIC
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import okhttp3.MediaType
+import okhttp3.CipherSuite
+import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody
 import okhttp3.Response
-import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.TlsVersion
 import picocli.CommandLine
-import picocli.CommandLine.*
+import picocli.CommandLine.Command
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
 import java.io.Closeable
+import java.io.File
 import java.time.Duration.ofSeconds
 import java.util.ArrayList
 import java.util.logging.Level
 import java.util.logging.Logger
-import kotlin.system.exitProcess
-
-val emptyBody = RequestBody.create(MediaType.get("text/plain"), "")
 
 /**
  * Simple command line tool to make a Coo.ee command.
@@ -75,27 +51,6 @@ class Main : ToolSession, Runnable {
   @Option(names = ["--logout"], description = ["Logout"])
   var logout: Boolean = false
 
-  @Option(names = ["--authorize"], description = ["Authorize Service"])
-  var authorize: String? = null
-
-  @Option(names = ["--token"], description = ["Auth Token"])
-  var token: String? = null
-
-  @Option(names = ["--tokenSet"], description = ["Token Set"])
-  override var defaultTokenSet: TokenSet = DefaultToken
-
-  @Option(names = ["--add"], description = ["Add Provider"])
-  var addProvider: String? = null
-
-  @Option(names = ["--remove"], description = ["Add Provider"])
-  var removeProvider: String? = null
-
-  @Option(names = ["--list"], description = ["Add Provider"])
-  var listProvider = false
-
-  @Option(names = ["--repl"], description = ["Repl"])
-  var repl = false
-
   @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
   var arguments: MutableList<String> = ArrayList()
 
@@ -103,19 +58,9 @@ class Main : ToolSession, Runnable {
 
   override lateinit var outputHandler: OutputHandler<Response>
 
-  override lateinit var credentialsStore: CredentialsStore
+  private val closeables = mutableListOf<Closeable>()
 
-  override lateinit var locationSource: LocationSource
-
-  override lateinit var serviceLibrary: ServiceLibrary
-
-  val closeables = mutableListOf<Closeable>()
-
-  private val logger = Logger.getLogger(Main::class.java.name)
-
-  private val serviceDefinition = CooeeAuthInterceptor().serviceDefinition
-
-  fun runCommand(): Int {
+  private fun runCommand(): Int {
     runBlocking {
       when {
         complete != null -> completeOption(complete!!)
@@ -128,46 +73,12 @@ class Main : ToolSession, Runnable {
           arguments.joinToString(" "))
         login -> login()
         logout -> logout()
-        authorize != null -> authorize()
-        addProvider != null -> addProvider()
-        removeProvider != null -> removeProvider()
-        listProvider -> listProviders()
-        repl -> launchRepl()
-        arguments.isEmpty() || arguments == listOf("") -> {
-        }
-        else -> cooeeCommand(arguments)
+        arguments.isEmpty() || arguments == listOf("") -> this@Main.todoCommand()
+        else -> this@Main.cooeeCommand(arguments)
       }
     }
 
     return 0
-  }
-
-  private fun launchRepl() {
-    val repl = Repl(this, apiHost())
-    repl.run()
-  }
-
-  private suspend fun addProvider() {
-    ProviderTools(client).add(this.addProvider!!, ProviderRequest(mapOf()))
-  }
-
-  private suspend fun removeProvider() {
-    ProviderTools(client).remove(this.removeProvider!!)
-  }
-
-  private suspend fun listProviders() {
-    ProviderTools(client).list().forEach {
-      outputHandler.info(it.name + "\t" + (if (it.installed) "installed" else "not installed"))
-    }
-  }
-
-  private suspend fun authorize() {
-    val token = cooeeToken()?.token
-    if (authorize == "strava") {
-      outputHandler.openLink("${apiHost()}/web/authenticate/$authorize?token=$token")
-    } else {
-      ServiceAuthorisation(this, apiHost()).authorize(authorize!!, token, defaultTokenSet)
-    }
   }
 
   private suspend fun login() {
@@ -181,7 +92,7 @@ class Main : ToolSession, Runnable {
       val jwt = parseClaims(token)
       outputHandler.info("JWT: $jwt")
 
-      credentialsStore.set(serviceDefinition, DefaultToken.name, Jwt(token))
+      tokenFile.writeText(jwt.toString())
     }
   }
 
@@ -191,60 +102,32 @@ class Main : ToolSession, Runnable {
     return Jwts.parser().parseClaimsJwt(unsignedToken).body
   }
 
-  private suspend fun logout() {
-    credentialsStore.remove(serviceDefinition, DefaultToken.name)
+  private fun logout() {
+    tokenFile.delete()
   }
 
-  private suspend fun listOptions(option: String): Collection<String> {
+  private fun listOptions(option: String): Collection<String> {
     return when (option) {
-      "option-complete" -> listOf("command-complete", "authorize", "add", "remove",
-        "option-complete")
-      "authorize" -> ProviderTools(client).list().flatMap { it.services }
-      "add" -> ProviderTools(client).list().filter { !it.installed }.map { it.name }
-      "remove" -> ProviderTools(client).list().filter { it.installed }.map { it.name }
+      "option-complete" -> listOf("command-complete", "option-complete")
       else -> listOf()
     }
   }
 
-  private fun printVersion() {
-    outputHandler.info(name() + " " + versionString())
-  }
-
-  private fun name(): String {
-    return "cooee"
-  }
-
-  private suspend fun completeOption(complete: String) {
+  private fun completeOption(complete: String) {
     return outputHandler.info(listOptions(complete).toSortedSet().joinToString("\n"))
   }
 
-  fun initialise() {
+  private fun initialise() {
     System.setProperty("apple.awt.UIElement", "true")
 
     if (!this::outputHandler.isInitialized) {
       outputHandler = buildHandler()
     }
 
-    if (!this::credentialsStore.isInitialized) {
-      credentialsStore = CredentialFactory.createCredentialsStore()
-    }
-
-    if (!this::locationSource.isInitialized) {
-      locationSource = BestLocation(outputHandler)
-    }
-
-    if (!this::serviceLibrary.isInitialized) {
-      serviceLibrary = OkurlServiceLibrary
-    }
-
-    if (!this::authenticatingInterceptor.isInitialized) {
-      authenticatingInterceptor = AuthenticatingInterceptor(this.credentialsStore)
-    }
-
     closeables.add(Closeable {
       if (this::client.isInitialized) {
-        client.connectionPool().evictAll()
-        client.dispatcher().executorService().shutdownNow()
+        client.connectionPool.evictAll()
+        client.dispatcher.executorService.shutdownNow()
       }
     })
 
@@ -256,90 +139,59 @@ class Main : ToolSession, Runnable {
   }
 
   private fun buildHandler(): OutputHandler<Response> {
-    return ConsoleHandler.instance(OkHttpResponseExtractor())
-  }
+    return object : ConsoleHandler<Response>(ToStringResponseExtractor) {
+      override suspend fun openLink(url: String) {
+        val result = exec("open", url)
 
-  private fun applyProxy(builder: OkHttpClient.Builder) {
-    when {
-      Preferences.local.proxy != null -> builder.proxy(Preferences.local.proxy!!.build())
-      else -> builder.proxySelector(ProxySearch.getDefaultProxySearch().proxySelector)
+        if (!result.success) {
+          System.err.println(result.outputString)
+        }
+      }
     }
   }
-
-  private lateinit var authenticatingInterceptor: AuthenticatingInterceptor
 
   private fun createClientBuilder(): OkHttpClient.Builder {
     val builder = OkHttpClient.Builder()
       .callTimeout(ofSeconds(15)).connectTimeout(ofSeconds(15))
       .readTimeout(ofSeconds(15)).writeTimeout(ofSeconds(15))
 
-    if (debug) {
-      val loggingInterceptor = HttpLoggingInterceptor()
-      loggingInterceptor.level = HttpLoggingInterceptor.Level.HEADERS
-      builder.addNetworkInterceptor(loggingInterceptor)
-    }
+    // TODO fix this to support TLSv1.3 and ECDHE ciphers
+    val suites = arrayOf(
+      // Note that the following cipher suites are all on HTTP/2's bad cipher suites list. We'll
+      // continue to include them until better suites are commonly available.
+      CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
+      CipherSuite.TLS_RSA_WITH_AES_256_GCM_SHA384,
+      CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA,
+      CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
+      CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA)
 
-    applyProxy(builder)
+    val modernWithoutEcc =
+      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).cipherSuites(*suites)
+        .tlsVersions(TlsVersion.TLS_1_2).build()
+    builder.connectionSpecs(listOf(modernWithoutEcc))
+
+//    if (debug) {
+//      val loggingInterceptor = HttpLoggingInterceptor()
+//      loggingInterceptor.level = HttpLoggingInterceptor.Level.HEADERS
+//      builder.addNetworkInterceptor(loggingInterceptor)
+//    }
+
+    val token = if (tokenFile.isFile) tokenFile.readText() else null
 
     builder.addInterceptor {
       it.proceed(it.request().edit {
         header("User-Agent", "cooee-cli/" + versionString())
 
-        if (local && it.request().url().host() == "localhost") {
-          val token = runBlocking { cooeeToken() }
-
-          if (token != null) {
-            header("Authorization", "Bearer ${token.token}")
-          }
+        if (token != null) {
+          header("Authorization", "Bearer $token")
         }
       })
     }
 
-    builder.addNetworkInterceptor(authenticatingInterceptor)
-
     return builder
   }
 
-  private suspend fun cooeeToken() = credentialsStore.get(serviceDefinition, DefaultToken)
-
-  suspend fun cooeeCommand(runArguments: List<String>): Int = coroutineScope {
-    try {
-      val result = bounceQuery(runArguments)
-
-      if (result.location != null || result.message != null || result.image != null) {
-        var imageResponse: Deferred<Response>? = null
-        if (result.image != null) {
-          imageResponse = async { client.execute(request(result.image)) }
-        }
-        if (result.message != null) {
-          outputHandler.info(result.message)
-        }
-        if (result.location != null) {
-          @Suppress("EXPERIMENTAL_API_USAGE")
-          launch(start = ATOMIC) {
-            outputHandler.openLink(result.location)
-          }
-        }
-        if (imageResponse != null) {
-          outputHandler.showOutput(imageResponse.await())
-        }
-        0
-      } else {
-        outputHandler.showError("No results found")
-        -1
-      }
-    } catch (ce: ClientException) {
-      val message = ce.responseMessage
-      outputHandler.showError(message = message)
-
-      -2
-    }
-  }
-
-  private suspend fun bounceQuery(runArguments: List<String>) =
-    client.query<GoResult>("${apiHost()}/api/v0/goinfo?q=${runArguments.joinToString(" ")}")
-
-  private fun apiHost() = when {
+  fun apiHost() = when {
     local -> "http://localhost:8080"
     else -> Preferences.local.api
   }
@@ -354,7 +206,7 @@ class Main : ToolSession, Runnable {
   }
 
   override fun run() {
-    configureLogging(debug, false, false)
+    configureLogging(debug, showHttp2Frames = false, sslDebug = false)
 
     initialise()
 
@@ -378,9 +230,11 @@ class Main : ToolSession, Runnable {
   }
 
   companion object {
+    val tokenFile = File("${System.getenv("HOME")}/.cooee/token")
+
     @JvmStatic
     fun main(vararg args: String) {
-      exitProcess(CommandLine(Main()).execute(*args))
+      CommandLine(Main()).execute(*args)
     }
   }
 }

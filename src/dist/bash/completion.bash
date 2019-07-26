@@ -48,26 +48,8 @@ _cooee_complete()
   case ${prev} in
         # options with an argument we don't currently help with, everything else is assumed to be handled
         # below in case statement or has no arguments so drops through to the url handling near the end
-        --token)
-            return
-            ;;
-        --authorize)
-            _cooee_complete=$(cooee --option-complete authorize)
-            COMPREPLY=( $( compgen -W "${_cooee_complete}" -- "$cur" ) )
-            return
-            ;;
         --option-complete)
             _cooee_complete=$(cooee --option-complete complete)
-            COMPREPLY=( $( compgen -W "${_cooee_complete}" -- "$cur" ) )
-            return
-            ;;
-        --add)
-            _cooee_complete=$(cooee --option-complete add)
-            COMPREPLY=( $( compgen -W "${_cooee_complete}" -- "$cur" ) )
-            return
-            ;;
-        --remove)
-            _cooee_complete=$(cooee --option-complete remove)
             COMPREPLY=( $( compgen -W "${_cooee_complete}" -- "$cur" ) )
             return
             ;;
@@ -76,7 +58,7 @@ _cooee_complete()
   if [[ ${cur} == -* ]]; then
       # TODO parse help automatically
       #_cooee_options=${_cooee_options:=$(_parse_help cooee --help)}
-      _cooee_options="-h --help -V --version -l --local --command-complete --option-complete --debug --login --logout --authorize --add --remove --list"
+      _cooee_options="-h --help -V --version -l --local --command-complete --option-complete --debug --login --logout"
       COMPREPLY=( $( compgen -W "$_cooee_options" -- "$cur" ) )
       return;
   fi

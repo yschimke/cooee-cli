@@ -1,12 +1,7 @@
 package com.baulsupp.cooee.cli
 
-import com.baulsupp.okurl.kotlin.JSON
-import com.baulsupp.okurl.kotlin.execute
-import com.baulsupp.okurl.kotlin.moshi
-import com.baulsupp.okurl.kotlin.query
-import com.baulsupp.okurl.kotlin.request
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 data class ProviderList(val providers: List<ProviderStatus>)
 data class ProviderStatus(
@@ -32,7 +27,7 @@ class ProviderTools(val client: OkHttpClient) {
   suspend fun add(name: String, request: ProviderRequest) {
     client.execute(request("https://api.coo.ee/api/v0/provider/$name") {
       val content = moshi.adapter(ProviderRequest::class.java).toJson(request)!!
-      method("PUT", RequestBody.create(JSON, content))
+      method("PUT", content.toRequestBody(JSON))
     })
   }
 }
