@@ -4,7 +4,6 @@ import com.baulsupp.cooee.cli.LoggingUtil.Companion.configureLogging
 import com.baulsupp.oksocial.output.ConsoleHandler
 import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.ToStringResponseExtractor
-import com.baulsupp.oksocial.output.process.exec
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import kotlinx.coroutines.runBlocking
@@ -29,7 +28,7 @@ import java.util.logging.Logger
  */
 @Command(name = "cooee", description = ["CLI for Coo.ee"],
   mixinStandardHelpOptions = true, version = ["dev"])
-class Main : ToolSession, Runnable {
+class Main : Runnable {
   @Option(names = ["-l", "--local"], description = ["Use local server"])
   var local = false
 
@@ -38,9 +37,6 @@ class Main : ToolSession, Runnable {
 
   @Option(names = ["--command-complete"], description = ["Complete Command"])
   var commandComplete: Boolean = false
-
-  @Option(names = ["--fish-complete"], description = ["Complete Command"])
-  var fishComplete: Boolean = false
 
   @Option(names = ["--debug"], description = ["Debug Output"])
   var debug: Boolean = false
@@ -54,28 +50,20 @@ class Main : ToolSession, Runnable {
   @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
   var arguments: MutableList<String> = ArrayList()
 
-  override lateinit var client: OkHttpClient
+  lateinit var client: OkHttpClient
 
-  override lateinit var outputHandler: OutputHandler<Response>
+  lateinit var outputHandler: OutputHandler<Response>
 
   private val closeables = mutableListOf<Closeable>()
 
-  private fun runCommand(): Int {
-    runBlocking {
-      when {
-        complete != null -> completeOption(complete!!)
-        commandComplete -> ShellCompletion(
-          this@Main,
-          apiHost(),
-          Shell.BASH
-        ).completeCommand(arguments.joinToString(" "))
-        fishComplete -> ShellCompletion(this@Main, apiHost(), Shell.FISH).completeCommand(
-          arguments.joinToString(" "))
-        login -> login()
-        logout -> logout()
-        arguments.isEmpty() || arguments == listOf("") -> this@Main.todoCommand()
-        else -> this@Main.cooeeCommand(arguments)
-      }
+  suspend fun runCommand(): Int {
+    when {
+      complete != null -> completeOption(complete!!)
+      commandComplete -> completeCommand(arguments.joinToString(" "))
+      login -> login()
+      logout -> logout()
+      arguments.isEmpty() || arguments == listOf("") -> this@Main.todoCommand()
+      else -> this@Main.cooeeCommand(arguments)
     }
 
     return 0
@@ -92,14 +80,16 @@ class Main : ToolSession, Runnable {
       val jwt = parseClaims(token)
       outputHandler.info("JWT: $jwt")
 
-      tokenFile.writeText(jwt.toString())
+      tokenFile
+        .apply { parentFile.mkdirs() }
+        .writeText(jwt.toString())
     }
   }
 
   private fun parseClaims(token: String): Claims? {
     // TODO verify using public signing key
     val unsignedToken = token.substring(0, token.lastIndexOf('.') + 1)
-    return Jwts.parser().parseClaimsJwt(unsignedToken).body
+    return Jwts.parserBuilder().build().parseClaimsJwt(unsignedToken).body
   }
 
   private fun logout() {
@@ -121,7 +111,7 @@ class Main : ToolSession, Runnable {
     System.setProperty("apple.awt.UIElement", "true")
 
     if (!this::outputHandler.isInitialized) {
-      outputHandler = buildHandler()
+      outputHandler = ConsoleHandler.instance(ToStringResponseExtractor)
     }
 
     closeables.add(Closeable {
@@ -135,18 +125,6 @@ class Main : ToolSession, Runnable {
       val clientBuilder = createClientBuilder()
 
       client = clientBuilder.build()
-    }
-  }
-
-  private fun buildHandler(): OutputHandler<Response> {
-    return object : ConsoleHandler<Response>(ToStringResponseExtractor) {
-      override suspend fun openLink(url: String) {
-        val result = exec("open", url)
-
-        if (!result.success) {
-          System.err.println(result.outputString)
-        }
-      }
     }
   }
 
@@ -206,7 +184,7 @@ class Main : ToolSession, Runnable {
   }
 
   override fun run() {
-    configureLogging(debug, showHttp2Frames = false, sslDebug = false)
+    configureLogging(debug)
 
     initialise()
 
@@ -219,18 +197,21 @@ class Main : ToolSession, Runnable {
     }
   }
 
-  override fun close() {
+  fun close() {
     for (c in closeables) {
       try {
         c.close()
       } catch (e: Exception) {
-        Logger.getLogger("main").log(Level.FINE, "close failed", e)
+        logger.log(Level.FINE, "close failed", e)
       }
     }
   }
 
   companion object {
-    val tokenFile = File("${System.getenv("HOME")}/.cooee/token")
+    val configDir = File(System.getProperty("user.home"), ".cooee")
+    val tokenFile = File(configDir, "token")
+
+    val logger by lazy { Logger.getLogger("main") }
 
     @JvmStatic
     fun main(vararg args: String) {

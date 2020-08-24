@@ -8,9 +8,9 @@ import kotlinx.coroutines.launch
 import okhttp3.Response
 
 suspend fun Main.todoCommand() = coroutineScope {
-  val result = todoQuery()
+  val queryResult = todoQuery()
 
-  for (result in result.todos) {
+  for (result in queryResult.todos) {
     outputHandler.info(result.line + ":" + result.message)
     if (result.url != null) {
       outputHandler.info(result.url)
@@ -46,8 +46,8 @@ suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope 
   }
 }
 
-private suspend fun Main.bounceQuery(runArguments: List<String>) =
+suspend fun Main.bounceQuery(runArguments: List<String>) =
   client.query<GoResult>("${apiHost()}/api/v0/goinfo?q=${runArguments.joinToString(" ")}")
 
-private suspend fun Main.todoQuery() =
+suspend fun Main.todoQuery() =
   client.query<TodoResult>("${apiHost()}/api/v0/todo")

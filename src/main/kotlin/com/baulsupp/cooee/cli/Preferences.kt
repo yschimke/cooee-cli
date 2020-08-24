@@ -8,21 +8,9 @@ import java.net.InetSocketAddress
 import java.util.logging.Level
 import java.util.logging.Logger
 
-data class Proxy(val host: String? = null, val port: Int = 8080, val user: String? = null, val password: String? = null, val type: java.net.Proxy.Type = java.net.Proxy.Type.DIRECT) {
-  fun build(): java.net.Proxy {
-    val address = if (host != null) InetSocketAddress(host, port) else null
-
-    return when (type) {
-      java.net.Proxy.Type.DIRECT -> java.net.Proxy.NO_PROXY
-      else -> java.net.Proxy(type, address)
-    }
-  }
-}
-
 data class Preferences(
   val api: String = "https://api.coo.ee",
   val web: String = "https://www.coo.ee",
-  val proxy: Proxy? = null,
   val descriptionLength: Int = 20
 ) {
   companion object {
