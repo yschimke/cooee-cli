@@ -1,13 +1,13 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.3.72"
+  kotlin("jvm") version "1.4.0"
+  kotlin("kapt") version "1.4.0"
   `maven-publish`
   application
   id("net.nemerosa.versioning") version "2.13.1"
-  id("com.diffplug.gradle.spotless") version "3.30.0"
-  id("com.palantir.graal") version "0.7.1"
-  kotlin("kapt") version "1.3.72"
+  id("com.diffplug.spotless") version "5.1.0"
+  id("com.palantir.graal") version "0.7.1-15-g62b5090"
 }
 
 repositories {
@@ -36,25 +36,15 @@ java {
 tasks {
   withType(KotlinCompile::class) {
     kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.apiVersion = "1.3"
-    kotlinOptions.languageVersion = "1.3"
     kotlinOptions.allWarningsAsErrors = false
     kotlinOptions.freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=enable")
   }
 }
 
-spotless {
-  kotlinGradle {
-    ktlint("0.31.0").userData(mutableMapOf("indent_size" to "2", "continuation_indent_size" to "2"))
-    trimTrailingWhitespace()
-    endWithNewline()
-  }
-}
-
 graal {
-  mainClass("io.rsocket.cli.Main")
-  outputName("rsocket-cli")
-  graalVersion("20.1.0")
+  mainClass("com.baulsupp.cooee.cli.Main")
+  outputName("cooee")
+  graalVersion("20.2.0")
   javaVersion("11")
 
   option("--enable-https")
@@ -81,19 +71,26 @@ dependencies {
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
   implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
   implementation("io.jsonwebtoken:jjwt-jackson:0.11.2")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.72")
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.72")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.3.8")
+  implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.0")
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.0")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.3.9")
   implementation("org.jline:jline:3.16.0")
   implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
 
   kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
   kapt("info.picocli:picocli-codegen:4.5.0")
-  compileOnly("org.graalvm.nativeimage:svm:20.1.0")
+  compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
+    // https://youtrack.jetbrains.com/issue/KT-29513
+    exclude(group= "org.graalvm.nativeimage")
+    exclude(group= "org.graalvm.truffle")
+//    exclude(group= "org.graalvm.sdk")
+    exclude(group= "org.graalvm.compiler")
+  }
+  implementation("io.github.classgraph:classgraph:4.8.87")
 
-  testImplementation("org.jetbrains.kotlin:kotlin-test:1.3.72")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.3.72")
+  testImplementation("org.jetbrains.kotlin:kotlin-test:1.4.0")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.0")
 
   testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.2")
 }
