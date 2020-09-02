@@ -9,5 +9,5 @@ suspend fun Main.completeCommand(word: String, line: String) =
 suspend fun Main.showCompletions(word: String, line: String) {
   val completionList = completeCommand(word, line)
 
-  outputHandler.info(completionList.completions.mapNotNull { it.word }.joinToString("\n"))
+  outputHandler.info(completionList.completions.mapNotNull { it.line }.joinToString("\n"))
 }

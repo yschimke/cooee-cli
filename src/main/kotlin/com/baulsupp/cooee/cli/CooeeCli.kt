@@ -71,7 +71,7 @@ class Main : Runnable {
   suspend fun runCommand(): Int {
     when {
       complete != null -> completeOption(complete!!)
-      commandComplete -> completeCommand(arguments.last(), arguments.joinToString(" "))
+      commandComplete -> showCompletions(arguments.last(), arguments.joinToString(" "))
       arguments.isEmpty() || arguments == listOf("") -> this@Main.showTodos()
       else -> this@Main.cooeeCommand(arguments)
     }

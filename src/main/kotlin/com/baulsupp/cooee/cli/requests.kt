@@ -25,9 +25,19 @@ suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope 
 
   val imageUrl = result.image_url?.url
   if (result.location != null || result.message != null || imageUrl != null) {
-    var imageResponse: Deferred<Response>? = null
+    var imageResponse: Deferred<Response?>? = null
     if (imageUrl != null) {
-      imageResponse = async { client.execute(request(imageUrl)) }
+      imageResponse = async {
+        try {
+          client.execute(request(imageUrl))
+        } catch (ce: ClientException) {
+          if (ce.code == 404) {
+            null
+          } else {
+            throw ce
+          }
+        }
+      }
     }
     if (result.message != null) {
       outputHandler.info(result.message)
@@ -39,7 +49,11 @@ suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope 
       }
     }
     if (imageResponse != null) {
-      outputHandler.showOutput(imageResponse.await())
+      val response = imageResponse.await()
+
+      if (response != null) {
+        outputHandler.showOutput(response)
+      }
     }
 
     0
@@ -64,7 +78,7 @@ suspend inline fun <reified Request, reified Response> RSocket.requestResponse(r
   val requestAdapter = moshi.adapter(Request::class.java)
   val responseAdapter = moshi.adapter(Response::class.java)
 
-  val requestPayload = Payload(requestAdapter.toJson(request).toByteArray(), buildMetadata("runCommand"))
+  val requestPayload = Payload(requestAdapter.toJson(request).toByteArray(), buildMetadata(route))
 
   val responsePayload = requestResponse(requestPayload)
 
