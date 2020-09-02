@@ -1,23 +1,38 @@
 package com.baulsupp.cooee.cli
 
 import com.baulsupp.cooee.cli.LoggingUtil.Companion.configureLogging
-import com.baulsupp.oksocial.output.ConsoleHandler
-import com.baulsupp.oksocial.output.OutputHandler
-import com.baulsupp.oksocial.output.ToStringResponseExtractor
+import com.baulsupp.oksocial.output.*
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
+import io.ktor.client.*
+import io.ktor.client.engine.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.features.websocket.*
+import io.ktor.util.*
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.ByteBufUtil
+import io.netty.buffer.CompositeByteBuf
+import io.rsocket.kotlin.RSocket
+import io.rsocket.kotlin.cancel
+import io.rsocket.kotlin.core.RSocketClientSupport
+import io.rsocket.kotlin.core.rSocket
+import io.rsocket.kotlin.payload.Payload
+import io.rsocket.kotlin.payload.PayloadMimeType
+import io.rsocket.metadata.CompositeMetadataCodec
+import io.rsocket.metadata.TaggingMetadataCodec
+import io.rsocket.metadata.WellKnownMimeType
 import kotlinx.coroutines.runBlocking
 import okhttp3.CipherSuite
 import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.TlsVersion
+import okhttp3.internal.closeQuietly
 import picocli.CommandLine
-import picocli.CommandLine.Command
-import picocli.CommandLine.Option
-import picocli.CommandLine.Parameters
+import picocli.CommandLine.*
 import java.io.Closeable
 import java.io.File
+import java.nio.charset.StandardCharsets
 import java.time.Duration.ofSeconds
 import java.util.ArrayList
 import java.util.logging.Level
@@ -26,6 +41,7 @@ import java.util.logging.Logger
 /**
  * Simple command line tool to make a Coo.ee command.
  */
+@KtorExperimentalAPI
 @Command(name = "cooee", description = ["CLI for Coo.ee"],
   mixinStandardHelpOptions = true, version = ["dev"])
 class Main : Runnable {
@@ -41,12 +57,6 @@ class Main : Runnable {
   @Option(names = ["--debug"], description = ["Debug Output"])
   var debug: Boolean = false
 
-  @Option(names = ["--login"], description = ["Login"])
-  var login: Boolean = false
-
-  @Option(names = ["--logout"], description = ["Logout"])
-  var logout: Boolean = false
-
   @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
   var arguments: MutableList<String> = ArrayList()
 
@@ -56,44 +66,17 @@ class Main : Runnable {
 
   private val closeables = mutableListOf<Closeable>()
 
+  lateinit var rsocketClient: RSocket
+
   suspend fun runCommand(): Int {
     when {
       complete != null -> completeOption(complete!!)
-      commandComplete -> completeCommand(arguments.joinToString(" "))
-      login -> login()
-      logout -> logout()
-      arguments.isEmpty() || arguments == listOf("") -> this@Main.todoCommand()
+      commandComplete -> completeCommand(arguments.last(), arguments.joinToString(" "))
+      arguments.isEmpty() || arguments == listOf("") -> this@Main.showTodos()
       else -> this@Main.cooeeCommand(arguments)
     }
 
     return 0
-  }
-
-  private suspend fun login() {
-    val web = webHost()
-
-    SimpleWebServer.forCode().use { s ->
-      outputHandler.openLink("$web/user/jwt?callback=${s.redirectUri}")
-
-      val token = s.waitForCode()
-
-      val jwt = parseClaims(token)
-      outputHandler.info("JWT: $jwt")
-
-      tokenFile
-        .apply { parentFile.mkdirs() }
-        .writeText(jwt.toString())
-    }
-  }
-
-  private fun parseClaims(token: String): Claims? {
-    // TODO verify using public signing key
-    val unsignedToken = token.substring(0, token.lastIndexOf('.') + 1)
-    return Jwts.parserBuilder().build().parseClaimsJwt(unsignedToken).body
-  }
-
-  private fun logout() {
-    tokenFile.delete()
   }
 
   private fun listOptions(option: String): Collection<String> {
@@ -107,11 +90,11 @@ class Main : Runnable {
     return outputHandler.info(listOptions(complete).toSortedSet().joinToString("\n"))
   }
 
-  private fun initialise() {
+  suspend fun initialise() {
     System.setProperty("apple.awt.UIElement", "true")
 
     if (!this::outputHandler.isInitialized) {
-      outputHandler = ConsoleHandler.instance(ToStringResponseExtractor)
+      outputHandler = ConsoleHandler.instance(OkHttpResponseExtractor)
     }
 
     closeables.add(Closeable {
@@ -126,33 +109,12 @@ class Main : Runnable {
 
       client = clientBuilder.build()
     }
+
+    rsocketClient = buildClient("ws://localhost:8080/rsocket")
   }
 
   private fun createClientBuilder(): OkHttpClient.Builder {
     val builder = OkHttpClient.Builder()
-      .callTimeout(ofSeconds(15)).connectTimeout(ofSeconds(15))
-      .readTimeout(ofSeconds(15)).writeTimeout(ofSeconds(15))
-
-    // TODO fix this to support TLSv1.3 and ECDHE ciphers
-    val suites = arrayOf(
-      // Note that the following cipher suites are all on HTTP/2's bad cipher suites list. We'll
-      // continue to include them until better suites are commonly available.
-      CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
-      CipherSuite.TLS_RSA_WITH_AES_256_GCM_SHA384,
-      CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA,
-      CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
-      CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA)
-
-    val modernWithoutEcc =
-      ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).cipherSuites(*suites)
-        .tlsVersions(TlsVersion.TLS_1_2).build()
-    builder.connectionSpecs(listOf(modernWithoutEcc))
-
-//    if (debug) {
-//      val loggingInterceptor = HttpLoggingInterceptor()
-//      loggingInterceptor.level = HttpLoggingInterceptor.Level.HEADERS
-//      builder.addNetworkInterceptor(loggingInterceptor)
-//    }
 
     val token = if (tokenFile.isFile) tokenFile.readText() else null
 
@@ -169,14 +131,24 @@ class Main : Runnable {
     return builder
   }
 
-  fun apiHost() = when {
-    local -> "http://localhost:8080"
-    else -> Preferences.local.api
-  }
+  suspend fun buildClient(uri: String): RSocket {
+    val client = HttpClient(OkHttp) {
+      engine {
+        preconfigured = client
+      }
 
-  private fun webHost() = when {
-    local -> "http://localhost:5000"
-    else -> Preferences.local.web
+      install(WebSockets)
+      install(RSocketClientSupport) {
+        payloadMimeType = PayloadMimeType("application/json", "message/x.rsocket.composite-metadata.v0")
+      }
+    }
+
+    return client.rSocket(uri, uri.startsWith("wss")).also {
+      closeables.add(0) {
+        it.cancel()
+        client.close()
+      }
+    }
   }
 
   private fun versionString(): String {
@@ -184,11 +156,12 @@ class Main : Runnable {
   }
 
   override fun run() {
+    System.setProperty("io.netty.noUnsafe", "true")
     configureLogging(debug)
 
-    initialise()
-
     runBlocking {
+      initialise()
+
       try {
         runCommand()
       } finally {
@@ -208,13 +181,16 @@ class Main : Runnable {
   }
 
   companion object {
-    val configDir = File(System.getProperty("user.home"), ".cooee")
+    val configDir = File(System.getProperty("user.home"), ".cooee").also {
+      it.mkdirs()
+    }
     val tokenFile = File(configDir, "token")
 
     val logger by lazy { Logger.getLogger("main") }
 
     @JvmStatic
     fun main(vararg args: String) {
+      System.setProperty("io.netty.noUnsafe", "true")
       CommandLine(Main()).execute(*args)
     }
   }

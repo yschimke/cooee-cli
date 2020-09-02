@@ -8,6 +8,7 @@ plugins {
   id("net.nemerosa.versioning") version "2.13.1"
   id("com.diffplug.spotless") version "5.1.0"
   id("com.palantir.graal") version "0.7.1-15-g62b5090"
+  id("com.squareup.wire") version "3.2.2"
 }
 
 repositories {
@@ -38,6 +39,13 @@ tasks {
     kotlinOptions.jvmTarget = "1.8"
     kotlinOptions.allWarningsAsErrors = false
     kotlinOptions.freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=enable")
+  }
+}
+
+wire {
+  kotlin {
+    out = "src/main/kotlin"
+    javaInterop = true
   }
 }
 
@@ -80,7 +88,7 @@ dependencies {
 
   kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
   kapt("info.picocli:picocli-codegen:4.5.0")
-  compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
+  implementation("org.graalvm.nativeimage:svm:20.2.0") {
     // https://youtrack.jetbrains.com/issue/KT-29513
     exclude(group= "org.graalvm.nativeimage")
     exclude(group= "org.graalvm.truffle")
@@ -88,6 +96,17 @@ dependencies {
     exclude(group= "org.graalvm.compiler")
   }
   implementation("io.github.classgraph:classgraph:4.8.87")
+
+  implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
+  implementation("io.ktor:ktor-network-tls:1.4.0")
+  implementation("io.ktor:ktor-client-okhttp:1.4.0")
+  implementation("io.ktor:ktor-client-core-jvm:1.4.0")
+
+  implementation("io.rsocket:rsocket-core:1.0.2")
+
+  api("com.squareup.wire:wire-runtime:3.2.2")
+  api("com.squareup.wire:wire-grpc-client:3.2.2")
+  api("com.squareup.wire:wire-moshi-adapter:3.2.2")
 
   testImplementation("org.jetbrains.kotlin:kotlin-test:1.4.0")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.0")

@@ -1,31 +1,33 @@
 package com.baulsupp.cooee.cli
 
+import com.baulsupp.cooee.p.CommandRequest
+import com.baulsupp.cooee.p.CommandResponse
+import com.baulsupp.cooee.p.TodoRequest
+import com.baulsupp.cooee.p.TodoResponse
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.ByteBufUtil
+import io.netty.buffer.CompositeByteBuf
+import io.rsocket.kotlin.RSocket
+import io.rsocket.kotlin.payload.Payload
+import io.rsocket.metadata.CompositeMetadataCodec
+import io.rsocket.metadata.TaggingMetadataCodec
+import io.rsocket.metadata.WellKnownMimeType
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import okhttp3.Response
-
-suspend fun Main.todoCommand() = coroutineScope {
-  val queryResult = todoQuery()
-
-  for (result in queryResult.todos) {
-    outputHandler.info(result.line + ":" + result.message)
-    if (result.url != null) {
-      outputHandler.info(result.url)
-    }
-    outputHandler.info("")
-  }
-}
+import java.lang.IllegalStateException
 
 suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope {
   val result = bounceQuery(runArguments)
 
-  if (result.location != null || result.message != null || result.image != null) {
+  val imageUrl = result.image_url?.url
+  if (result.location != null || result.message != null || imageUrl != null) {
     var imageResponse: Deferred<Response>? = null
-    if (result.image != null) {
-      imageResponse = async { client.execute(request(result.image)) }
+    if (imageUrl != null) {
+      imageResponse = async { client.execute(request(imageUrl)) }
     }
     if (result.message != null) {
       outputHandler.info(result.message)
@@ -39,6 +41,7 @@ suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope 
     if (imageResponse != null) {
       outputHandler.showOutput(imageResponse.await())
     }
+
     0
   } else {
     outputHandler.showError("No results found")
@@ -47,7 +50,23 @@ suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope 
 }
 
 suspend fun Main.bounceQuery(runArguments: List<String>) =
-  client.query<GoResult>("${apiHost()}/api/v0/goinfo?q=${runArguments.joinToString(" ")}")
+  rsocketClient.requestResponse<CommandRequest, CommandResponse>("runCommand", CommandRequest(parsed_command = runArguments))
 
-suspend fun Main.todoQuery() =
-  client.query<TodoResult>("${apiHost()}/api/v0/todo")
+fun buildMetadata(route: String): ByteArray? {
+  val compositeByteBuf = CompositeByteBuf(ByteBufAllocator.DEFAULT, false, 1)
+  val routingMetadata = TaggingMetadataCodec.createRoutingMetadata(ByteBufAllocator.DEFAULT, listOf(route))
+  CompositeMetadataCodec.encodeAndAddMetadata(compositeByteBuf, ByteBufAllocator.DEFAULT,
+    WellKnownMimeType.MESSAGE_RSOCKET_ROUTING, routingMetadata.content)
+  return ByteBufUtil.getBytes(compositeByteBuf)
+}
+
+suspend inline fun <reified Request, reified Response> RSocket.requestResponse(route: String, request: Request): Response {
+  val requestAdapter = moshi.adapter(Request::class.java)
+  val responseAdapter = moshi.adapter(Response::class.java)
+
+  val requestPayload = Payload(requestAdapter.toJson(request).toByteArray(), buildMetadata("runCommand"))
+
+  val responsePayload = requestResponse(requestPayload)
+
+  return responseAdapter.fromJson(responsePayload.data.readText()) ?: throw IllegalStateException("Null response")
+}

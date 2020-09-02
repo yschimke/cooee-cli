@@ -5,6 +5,8 @@ import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.squareup.wire.WireJsonAdapterFactory
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
@@ -33,6 +35,8 @@ object Rfc3339InstantJsonAdapter : JsonAdapter<Instant>() {
 }
 
 val moshi = Moshi.Builder()
+  .add(WireJsonAdapterFactory())
+  .add(KotlinJsonAdapterFactory())
   .add(Date::class.java, Rfc3339DateJsonAdapter().nullSafe())
   .add(Instant::class.java, Rfc3339InstantJsonAdapter.nullSafe())
   .build()!!
