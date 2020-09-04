@@ -4,8 +4,11 @@ import com.baulsupp.cooee.cli.LoggingUtil.Companion.configureLogging
 import com.baulsupp.cooee.p.TokenRequest
 import com.baulsupp.cooee.p.TokenResponse
 import com.baulsupp.oksocial.output.*
+import com.baulsupp.okurl.authenticator.AuthInterceptor
 import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.RenewingInterceptor
+import com.baulsupp.okurl.credentials.DefaultToken
+import com.baulsupp.okurl.credentials.TokenSet
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.features.websocket.*
@@ -55,6 +58,12 @@ class Main : Runnable {
   private val closeables = mutableListOf<Closeable>()
 
   lateinit var rsocketClient: RSocket
+
+  val services = AuthenticatingInterceptor.defaultServices()
+
+  val credentialsStore = com.baulsupp.okurl.credentials.SimpleCredentialsStore.also {
+    File(System.getProperty("user.home"), ".okurl").mkdirs()
+  }
 
   suspend fun runCommand(): Int {
     when {
@@ -106,8 +115,6 @@ class Main : Runnable {
 
     builder.cache(Cache(cacheDir, 50 * 1024 * 1024))
 
-    val credentialsStore = com.baulsupp.okurl.credentials.SimpleCredentialsStore
-
     builder.addInterceptor(RenewingInterceptor(credentialsStore))
     builder.addInterceptor(BrotliInterceptor)
 
@@ -156,9 +163,20 @@ class Main : Runnable {
     }
   }
 
-  private fun tokenResponse(request: TokenRequest?): TokenResponse {
+  suspend fun tokenResponse(request: TokenRequest?): TokenResponse? {
+    val serviceName = request!!.service ?: return null
 
-    return TokenResponse(request?.service + "AAA")
+    val service = services.find { it.name() == serviceName }!!
+    val tokenString = service.getTokenString(serviceName, request)
+
+    return TokenResponse(token = tokenString)
+  }
+
+  suspend fun <T> AuthInterceptor<T>.getTokenString(serviceName: String, request: TokenRequest): String? {
+    val tokenSet = request.name?.let { TokenSet(it) } ?: DefaultToken
+    val token = credentialsStore.get(serviceDefinition, tokenSet) ?: return null
+    val tokenString = serviceDefinition.formatCredentialsString(token)
+    return tokenString
   }
 
   private fun versionString(): String {
@@ -174,6 +192,8 @@ class Main : Runnable {
 
       try {
         runCommand()
+      } catch (ue: UsageException) {
+        outputHandler.showError(ue.message)
       } finally {
         close()
       }

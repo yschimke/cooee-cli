@@ -1,5 +1,7 @@
 package com.baulsupp.cooee.cli
 
+import com.baulsupp.okurl.credentials.DefaultToken
+import com.baulsupp.okurl.credentials.Token
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
@@ -101,12 +103,18 @@ suspend fun Call.await(): Response {
 
 class ClientException(val responseMessage: String, val code: Int) : IOException("$code: $responseMessage")
 
-
 fun request(
   url: String? = null,
+  tokenSet: Token = DefaultToken,
   init: Request.Builder.() -> Unit = {}
-): Request = requestBuilder(url).apply(init).build()
+): Request = requestBuilder(url, tokenSet).apply(init).build()
 
 fun requestBuilder(
-  url: String? = null
-): Request.Builder = Request.Builder().apply { if (url != null) url(url) }
+  url: String? = null,
+  tokenSet: Token = DefaultToken,
+): Request.Builder = Request.Builder().apply {
+  if (url != null) url(url)
+}.tag(
+  Token::class.java,
+  tokenSet
+)
