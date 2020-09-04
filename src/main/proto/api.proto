@@ -74,8 +74,18 @@ message CompletionResponse {
 }
 
 message TodoRequest {
+  optional uint32 limit = 1;
 }
 
 message TodoResponse {
   repeated CommandSuggestion todos = 1;
+}
+
+message TokenRequest {
+  optional string service = 1;
+  optional string name = 2;
+}
+
+message TokenResponse {
+  optional string token = 1;
 }

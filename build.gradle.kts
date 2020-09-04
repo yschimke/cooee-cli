@@ -72,8 +72,8 @@ dependencies {
   implementation("com.squareup.moshi:moshi:1.9.3")
   implementation("com.squareup.moshi:moshi-adapters:1.9.3")
   implementation("com.squareup.moshi:moshi-kotlin:1.9.3")
-  implementation("com.squareup.okhttp3:okhttp:4.8.1")
-  implementation("com.squareup.okhttp3:logging-interceptor:4.8.1")
+//  implementation("com.squareup.okhttp3:okhttp:4.8.1")
+//  implementation("com.squareup.okhttp3:logging-interceptor:4.8.1")
   implementation("com.squareup.okio:okio:2.7.0")
   implementation("com.github.yschimke:oksocial-output:5.6")
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
@@ -85,6 +85,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.3.9")
   implementation("org.jline:jline:3.16.0")
   implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
+  implementation("com.github.yschimke:okurl:2.16")
 
   kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
   kapt("info.picocli:picocli-codegen:4.5.0")
@@ -99,13 +100,19 @@ dependencies {
 
   implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
   implementation("io.ktor:ktor-network-tls:1.4.0")
-  implementation("io.ktor:ktor-client-okhttp:1.4.0")
-  implementation("io.ktor:ktor-client-core-jvm:1.4.0")
+  implementation("io.ktor:ktor-client-okhttp:1.4.0") {
+    exclude(group= "com.squareup.okhttp3")
+  }
+  implementation("io.ktor:ktor-client-core-jvm:1.4.0") {
+    exclude(group= "com.squareup.okhttp3")
+  }
 
   implementation("io.rsocket:rsocket-core:1.0.2")
 
   api("com.squareup.wire:wire-runtime:3.2.2")
-  api("com.squareup.wire:wire-grpc-client:3.2.2")
+  api("com.squareup.wire:wire-grpc-client:3.2.2") {
+    exclude(group= "com.squareup.okhttp3")
+  }
   api("com.squareup.wire:wire-moshi-adapter:3.2.2")
 
   testImplementation("org.jetbrains.kotlin:kotlin-test:1.4.0")

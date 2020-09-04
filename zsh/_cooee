@@ -1,0 +1,21 @@
+#compdef cooee
+#autoload
+
+_cooee_complete() {
+#    compadd "$line aaaaaa"
+    completes=($(cooee --command-complete "$line"))
+    compadd $completes
+}
+
+_cooee() {
+  local context state state_descr line
+  typeset -A opt_args
+
+  _arguments -C -S \
+    --debug'[Debug]' \
+    --command-complete='[Command completion]' \
+    '*: :_cooee_complete' \
+    && ret=0
+}
+
+_cooee "$@"

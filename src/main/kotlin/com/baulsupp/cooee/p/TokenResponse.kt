@@ -8,6 +8,7 @@ import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
 import com.squareup.wire.WireField
+import com.squareup.wire.internal.sanitize
 import kotlin.Any
 import kotlin.Boolean
 import kotlin.Int
@@ -16,34 +17,34 @@ import kotlin.hashCode
 import kotlin.jvm.JvmField
 import okio.ByteString
 
-class TodoRequest(
+class TokenResponse(
   @field:WireField(
     tag = 1,
-    adapter = "com.squareup.wire.ProtoAdapter#UINT32"
+    adapter = "com.squareup.wire.ProtoAdapter#STRING"
   )
   @JvmField
-  val limit: Int? = null,
+  val token: String? = null,
   unknownFields: ByteString = ByteString.EMPTY
-) : Message<TodoRequest, TodoRequest.Builder>(ADAPTER, unknownFields) {
+) : Message<TokenResponse, TokenResponse.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
     val builder = Builder()
-    builder.limit = limit
+    builder.token = token
     builder.addUnknownFields(unknownFields)
     return builder
   }
 
   override fun equals(other: Any?): Boolean {
     if (other === this) return true
-    if (other !is TodoRequest) return false
+    if (other !is TokenResponse) return false
     return unknownFields == other.unknownFields
-        && limit == other.limit
+        && token == other.token
   }
 
   override fun hashCode(): Int {
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
-      result = result * 37 + limit.hashCode()
+      result = result * 37 + token.hashCode()
       super.hashCode = result
     }
     return result
@@ -51,59 +52,59 @@ class TodoRequest(
 
   override fun toString(): String {
     val result = mutableListOf<String>()
-    if (limit != null) result += """limit=$limit"""
-    return result.joinToString(prefix = "TodoRequest{", separator = ", ", postfix = "}")
+    if (token != null) result += """token=${sanitize(token)}"""
+    return result.joinToString(prefix = "TokenResponse{", separator = ", ", postfix = "}")
   }
 
-  fun copy(limit: Int? = this.limit, unknownFields: ByteString = this.unknownFields): TodoRequest =
-      TodoRequest(limit, unknownFields)
+  fun copy(token: String? = this.token, unknownFields: ByteString = this.unknownFields):
+      TokenResponse = TokenResponse(token, unknownFields)
 
-  class Builder : Message.Builder<TodoRequest, Builder>() {
+  class Builder : Message.Builder<TokenResponse, Builder>() {
     @JvmField
-    var limit: Int? = null
+    var token: String? = null
 
-    fun limit(limit: Int?): Builder {
-      this.limit = limit
+    fun token(token: String?): Builder {
+      this.token = token
       return this
     }
 
-    override fun build(): TodoRequest = TodoRequest(
-      limit = limit,
+    override fun build(): TokenResponse = TokenResponse(
+      token = token,
       unknownFields = buildUnknownFields()
     )
   }
 
   companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<TodoRequest> = object : ProtoAdapter<TodoRequest>(
+    val ADAPTER: ProtoAdapter<TokenResponse> = object : ProtoAdapter<TokenResponse>(
       FieldEncoding.LENGTH_DELIMITED, 
-      TodoRequest::class, 
-      "type.googleapis.com/com.baulsupp.cooee.p.TodoRequest"
+      TokenResponse::class, 
+      "type.googleapis.com/com.baulsupp.cooee.p.TokenResponse"
     ) {
-      override fun encodedSize(value: TodoRequest): Int = 
-        ProtoAdapter.UINT32.encodedSizeWithTag(1, value.limit) +
+      override fun encodedSize(value: TokenResponse): Int = 
+        ProtoAdapter.STRING.encodedSizeWithTag(1, value.token) +
         value.unknownFields.size
 
-      override fun encode(writer: ProtoWriter, value: TodoRequest) {
-        ProtoAdapter.UINT32.encodeWithTag(writer, 1, value.limit)
+      override fun encode(writer: ProtoWriter, value: TokenResponse) {
+        ProtoAdapter.STRING.encodeWithTag(writer, 1, value.token)
         writer.writeBytes(value.unknownFields)
       }
 
-      override fun decode(reader: ProtoReader): TodoRequest {
-        var limit: Int? = null
+      override fun decode(reader: ProtoReader): TokenResponse {
+        var token: String? = null
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
-            1 -> limit = ProtoAdapter.UINT32.decode(reader)
+            1 -> token = ProtoAdapter.STRING.decode(reader)
             else -> reader.readUnknownField(tag)
           }
         }
-        return TodoRequest(
-          limit = limit,
+        return TokenResponse(
+          token = token,
           unknownFields = unknownFields
         )
       }
 
-      override fun redact(value: TodoRequest): TodoRequest = value.copy(
+      override fun redact(value: TokenResponse): TokenResponse = value.copy(
         unknownFields = ByteString.EMPTY
       )
     }

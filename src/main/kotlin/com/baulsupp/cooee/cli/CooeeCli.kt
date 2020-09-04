@@ -1,39 +1,30 @@
 package com.baulsupp.cooee.cli
 
 import com.baulsupp.cooee.cli.LoggingUtil.Companion.configureLogging
+import com.baulsupp.cooee.p.TokenRequest
+import com.baulsupp.cooee.p.TokenResponse
 import com.baulsupp.oksocial.output.*
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.Jwts
+import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
+import com.baulsupp.okurl.authenticator.RenewingInterceptor
 import io.ktor.client.*
-import io.ktor.client.engine.*
-import io.ktor.client.engine.okhttp.*
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.features.websocket.*
 import io.ktor.util.*
-import io.netty.buffer.ByteBufAllocator
-import io.netty.buffer.ByteBufUtil
-import io.netty.buffer.CompositeByteBuf
 import io.rsocket.kotlin.RSocket
+import io.rsocket.kotlin.RSocketRequestHandler
 import io.rsocket.kotlin.cancel
 import io.rsocket.kotlin.core.RSocketClientSupport
 import io.rsocket.kotlin.core.rSocket
 import io.rsocket.kotlin.payload.Payload
 import io.rsocket.kotlin.payload.PayloadMimeType
-import io.rsocket.metadata.CompositeMetadataCodec
-import io.rsocket.metadata.TaggingMetadataCodec
-import io.rsocket.metadata.WellKnownMimeType
 import kotlinx.coroutines.runBlocking
-import okhttp3.CipherSuite
-import okhttp3.ConnectionSpec
-import okhttp3.OkHttpClient
-import okhttp3.Response
-import okhttp3.TlsVersion
-import okhttp3.internal.closeQuietly
+import okhttp3.*
+import okhttp3.brotli.BrotliInterceptor
+import okhttp3.logging.LoggingEventListener
 import picocli.CommandLine
 import picocli.CommandLine.*
 import java.io.Closeable
 import java.io.File
-import java.nio.charset.StandardCharsets
-import java.time.Duration.ofSeconds
 import java.util.ArrayList
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -45,13 +36,10 @@ import java.util.logging.Logger
 @Command(name = "cooee", description = ["CLI for Coo.ee"],
   mixinStandardHelpOptions = true, version = ["dev"])
 class Main : Runnable {
-  @Option(names = ["-l", "--local"], description = ["Use local server"])
-  var local = false
-
   @Option(names = ["--option-complete"], description = ["Complete options"])
   var complete: String? = null
 
-  @Option(names = ["--command-complete"], description = ["Complete Command"])
+  @Option(names = ["--command-complete"], description = ["Complete command"])
   var commandComplete: Boolean = false
 
   @Option(names = ["--debug"], description = ["Debug Output"])
@@ -116,16 +104,24 @@ class Main : Runnable {
   private fun createClientBuilder(): OkHttpClient.Builder {
     val builder = OkHttpClient.Builder()
 
-    val token = if (tokenFile.isFile) tokenFile.readText() else null
+    builder.cache(Cache(cacheDir, 50 * 1024 * 1024))
+
+    val credentialsStore = com.baulsupp.okurl.credentials.SimpleCredentialsStore
+
+    builder.addInterceptor(RenewingInterceptor(credentialsStore))
+    builder.addInterceptor(BrotliInterceptor)
+
+    val authenticatingInterceptor = AuthenticatingInterceptor(credentialsStore)
+    builder.addNetworkInterceptor(authenticatingInterceptor)
 
     builder.addInterceptor {
       it.proceed(it.request().edit {
         header("User-Agent", "cooee-cli/" + versionString())
-
-        if (token != null) {
-          header("Authorization", "Bearer $token")
-        }
       })
+    }
+
+    if (debug) {
+      builder.eventListenerFactory(LoggingEventListener.Factory())
     }
 
     return builder
@@ -140,6 +136,15 @@ class Main : Runnable {
       install(WebSockets)
       install(RSocketClientSupport) {
         payloadMimeType = PayloadMimeType("application/json", "message/x.rsocket.composite-metadata.v0")
+        acceptor = {
+          RSocketRequestHandler {
+            requestResponse = {
+              val request = moshi.adapter<TokenRequest>(TokenRequest::class.java).fromJson(it.data.readText())
+              val response = tokenResponse(request)
+              Payload(moshi.adapter<TokenResponse>(TokenResponse::class.java).toJson(response))
+            }
+          }
+        }
       }
     }
 
@@ -149,6 +154,11 @@ class Main : Runnable {
         client.close()
       }
     }
+  }
+
+  private fun tokenResponse(request: TokenRequest?): TokenResponse {
+
+    return TokenResponse(request?.service + "AAA")
   }
 
   private fun versionString(): String {
@@ -184,6 +194,7 @@ class Main : Runnable {
     val configDir = File(System.getProperty("user.home"), ".cooee").also {
       it.mkdirs()
     }
+    val cacheDir = File(configDir, "cache")
     val tokenFile = File(configDir, "token")
 
     val logger by lazy { Logger.getLogger("main") }

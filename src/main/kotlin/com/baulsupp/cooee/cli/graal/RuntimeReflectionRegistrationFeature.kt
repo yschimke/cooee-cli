@@ -26,11 +26,9 @@ internal class RuntimeReflectionRegistrationFeature : Feature {
             registerMoshiAdapter(classInfo.loadClass())
           }             // Start the scan
           for (classInfo in scanResult.getSubclasses(Message.Builder::class.java.name)) {
-            println(classInfo)
             registerWireBuilder(classInfo.loadClass())
           } // Start the scan
           for (classInfo in scanResult.getClassesImplementing(WireEnum::class.java.name)) {
-            println(classInfo)
             registerWireEnum(classInfo.loadClass())
           }
         }

@@ -16,6 +16,8 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import okhttp3.Response
 import java.lang.IllegalStateException
@@ -32,6 +34,7 @@ suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope 
           client.execute(request(imageUrl))
         } catch (ce: ClientException) {
           if (ce.code == 404) {
+            println(ce)
             null
           } else {
             throw ce
@@ -83,4 +86,15 @@ suspend inline fun <reified Request, reified Response> RSocket.requestResponse(r
   val responsePayload = requestResponse(requestPayload)
 
   return responseAdapter.fromJson(responsePayload.data.readText()) ?: throw IllegalStateException("Null response")
+}
+
+inline fun <reified Request, reified Response> RSocket.requestStream(route: String, request: Request): Flow<Response> {
+  val requestAdapter = moshi.adapter(Request::class.java)
+  val responseAdapter = moshi.adapter(Response::class.java)
+
+  val requestPayload = Payload(requestAdapter.toJson(request).toByteArray(), buildMetadata(route))
+
+  return requestStream(requestPayload).map {
+    responseAdapter.fromJson(it.data.readText()) ?: throw IllegalStateException("Null response")
+  }
 }
