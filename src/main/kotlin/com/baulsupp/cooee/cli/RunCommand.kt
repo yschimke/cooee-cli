@@ -2,13 +2,14 @@ package com.baulsupp.cooee.cli
 
 import com.baulsupp.cooee.p.CommandRequest
 import com.baulsupp.cooee.p.CommandResponse
+import com.baulsupp.cooee.p.CommandStatus
 import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.oauth2.Oauth2Token
 import com.baulsupp.okurl.credentials.TokenValue
 import kotlinx.coroutines.*
 import okhttp3.Response
 
-suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope {
+suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String>): Int = coroutineScope {
   val result = bounceQuery(runArguments)
 
   val imageUrl = result.image_url?.url
@@ -34,7 +35,7 @@ suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope 
     if (result.message != null) {
       outputHandler.info(result.message)
     }
-    if (result.location != null) {
+    if (result.location != null && (result.status == CommandStatus.REDIRECT || openExtraLinks)) {
       @Suppress("EXPERIMENTAL_API_USAGE")
       launch(start = CoroutineStart.ATOMIC) {
         outputHandler.openLink(result.location)

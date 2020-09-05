@@ -48,6 +48,9 @@ class Main : Runnable {
   @Option(names = ["--debug"], description = ["Debug Output"])
   var debug: Boolean = false
 
+  @Option(names = ["--open"], description = ["Open External Links"])
+  var open: Boolean = false
+
   @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
   var arguments: MutableList<String> = ArrayList()
 
@@ -70,7 +73,7 @@ class Main : Runnable {
       complete != null -> completeOption(complete!!)
       commandComplete -> showCompletions(arguments.last(), arguments.joinToString(" "))
       arguments.isEmpty() || arguments == listOf("") -> this@Main.showTodos()
-      else -> this@Main.cooeeCommand(arguments)
+      else -> this@Main.cooeeCommand(open, arguments)
     }
 
     return 0
@@ -175,8 +178,7 @@ class Main : Runnable {
   suspend fun <T> AuthInterceptor<T>.getTokenString(serviceName: String, request: TokenRequest): String? {
     val tokenSet = request.name?.let { TokenSet(it) } ?: DefaultToken
     val token = credentialsStore.get(serviceDefinition, tokenSet) ?: return null
-    val tokenString = serviceDefinition.formatCredentialsString(token)
-    return tokenString
+    return serviceDefinition.formatCredentialsString(token)
   }
 
   private fun versionString(): String {
