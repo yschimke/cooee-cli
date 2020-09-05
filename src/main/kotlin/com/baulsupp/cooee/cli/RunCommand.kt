@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 import okhttp3.Response
 
 suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String>): Int = coroutineScope {
-  val result = bounceQuery(runArguments)
+  val result = runCommand(runArguments)
 
   val imageUrl = result.image_url?.url
   if (result.location != null || result.message != null || imageUrl != null) {
@@ -56,5 +56,5 @@ suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String
   }
 }
 
-suspend fun Main.bounceQuery(runArguments: List<String>) =
+suspend fun Main.runCommand(runArguments: List<String>) =
   rsocketClient.requestResponse<CommandRequest, CommandResponse>("runCommand", CommandRequest(parsed_command = runArguments))

@@ -18,8 +18,7 @@ enum CommandStatus {
 }
 
 message CommandRequest {
-  optional string command = 1;
-  repeated string parsed_command = 2;
+  repeated string parsed_command = 1;
 }
 
 message CommandResponse {

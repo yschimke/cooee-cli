@@ -15,19 +15,12 @@ import kotlin.Boolean
 import kotlin.Int
 import kotlin.String
 import kotlin.collections.List
-import kotlin.hashCode
 import kotlin.jvm.JvmField
 import okio.ByteString
 
 class CommandRequest(
   @field:WireField(
     tag = 1,
-    adapter = "com.squareup.wire.ProtoAdapter#STRING"
-  )
-  @JvmField
-  val command: String? = null,
-  @field:WireField(
-    tag = 2,
     adapter = "com.squareup.wire.ProtoAdapter#STRING",
     label = WireField.Label.REPEATED
   )
@@ -37,7 +30,6 @@ class CommandRequest(
 ) : Message<CommandRequest, CommandRequest.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
     val builder = Builder()
-    builder.command = command
     builder.parsed_command = parsed_command
     builder.addUnknownFields(unknownFields)
     return builder
@@ -47,7 +39,6 @@ class CommandRequest(
     if (other === this) return true
     if (other !is CommandRequest) return false
     return unknownFields == other.unknownFields
-        && command == other.command
         && parsed_command == other.parsed_command
   }
 
@@ -55,7 +46,6 @@ class CommandRequest(
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
-      result = result * 37 + command.hashCode()
       result = result * 37 + parsed_command.hashCode()
       super.hashCode = result
     }
@@ -64,28 +54,16 @@ class CommandRequest(
 
   override fun toString(): String {
     val result = mutableListOf<String>()
-    if (command != null) result += """command=${sanitize(command)}"""
     if (parsed_command.isNotEmpty()) result += """parsed_command=${sanitize(parsed_command)}"""
     return result.joinToString(prefix = "CommandRequest{", separator = ", ", postfix = "}")
   }
 
-  fun copy(
-    command: String? = this.command,
-    parsed_command: List<String> = this.parsed_command,
-    unknownFields: ByteString = this.unknownFields
-  ): CommandRequest = CommandRequest(command, parsed_command, unknownFields)
+  fun copy(parsed_command: List<String> = this.parsed_command, unknownFields: ByteString =
+      this.unknownFields): CommandRequest = CommandRequest(parsed_command, unknownFields)
 
   class Builder : Message.Builder<CommandRequest, Builder>() {
     @JvmField
-    var command: String? = null
-
-    @JvmField
     var parsed_command: List<String> = emptyList()
-
-    fun command(command: String?): Builder {
-      this.command = command
-      return this
-    }
 
     fun parsed_command(parsed_command: List<String>): Builder {
       checkElementsNotNull(parsed_command)
@@ -94,7 +72,6 @@ class CommandRequest(
     }
 
     override fun build(): CommandRequest = CommandRequest(
-      command = command,
       parsed_command = parsed_command,
       unknownFields = buildUnknownFields()
     )
@@ -108,28 +85,23 @@ class CommandRequest(
       "type.googleapis.com/com.baulsupp.cooee.p.CommandRequest"
     ) {
       override fun encodedSize(value: CommandRequest): Int = 
-        ProtoAdapter.STRING.encodedSizeWithTag(1, value.command) +
-        ProtoAdapter.STRING.asRepeated().encodedSizeWithTag(2, value.parsed_command) +
+        ProtoAdapter.STRING.asRepeated().encodedSizeWithTag(1, value.parsed_command) +
         value.unknownFields.size
 
       override fun encode(writer: ProtoWriter, value: CommandRequest) {
-        ProtoAdapter.STRING.encodeWithTag(writer, 1, value.command)
-        ProtoAdapter.STRING.asRepeated().encodeWithTag(writer, 2, value.parsed_command)
+        ProtoAdapter.STRING.asRepeated().encodeWithTag(writer, 1, value.parsed_command)
         writer.writeBytes(value.unknownFields)
       }
 
       override fun decode(reader: ProtoReader): CommandRequest {
-        var command: String? = null
         val parsed_command = mutableListOf<String>()
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
-            1 -> command = ProtoAdapter.STRING.decode(reader)
-            2 -> parsed_command.add(ProtoAdapter.STRING.decode(reader))
+            1 -> parsed_command.add(ProtoAdapter.STRING.decode(reader))
             else -> reader.readUnknownField(tag)
           }
         }
         return CommandRequest(
-          command = command,
           parsed_command = parsed_command,
           unknownFields = unknownFields
         )
