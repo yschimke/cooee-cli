@@ -7,14 +7,14 @@ enum class Shell {
   BASH, ZSH
 }
 
-suspend fun Main.completeCommand(word: String, line: String) =
-  rsocketClient.requestResponse<CompletionRequest, CompletionResponse>("complete", CompletionRequest(word = word, line = line))
+suspend fun Main.completeCommand(line: String) =
+  rsocketClient.requestResponse<CompletionRequest, CompletionResponse>("complete", CompletionRequest(line = line))
 
-suspend fun Main.showCompletions(word: String, line: String, shell: Shell) {
-  val completionList = completeCommand(word, line)
+suspend fun Main.showCompletions(line: String, shell: Shell) {
+  val completionList = completeCommand(line)
 
   when (shell) {
-    Shell.ZSH -> outputHandler.info(completionList.completions.mapNotNull { it.word }.joinToString("\n"))
+    Shell.ZSH -> outputHandler.info(completionList.completions.mapNotNull { "" + it.word + ":'${it.command?.description ?: it.line}'" }.joinToString("\n"))
     Shell.BASH -> outputHandler.info(completionList.completions.mapNotNull { it.word }.joinToString("\n"))
   }
 }

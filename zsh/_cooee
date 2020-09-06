@@ -2,20 +2,19 @@
 #autoload
 
 _cooee_complete() {
-    local -a subcmds
-#    subcmds=('github' 'github:"Github Website"' -- 'strava' 'strava:"Strava website"' )
-    subcmds=('github:"Github Website"' 'strava:"Strava website"' )
-    _describe 'cooee' subcmds
-#    completes=($(cooee --command-complete "$line"))
-#    compadd $completes
+  local cooeelist
+
+  if ! [[ "$words[CURRENT]" =~ '^-.*$' ]]
+  then
+    cooeelist=(${(f)"$(cooee --command-complete "$words[2,-1]" 2>/dev/null)"})
+
+    _describe cooee cooeelist
+  fi
 }
 
 _cooee() {
   local context state state_descr line
   typeset -A opt_args
-
-#  zstyle ':completion:$curcontext:' group-name '' # group results by category
-#  zstyle ':completion:$curcontext:' menu select
 
   _arguments -C -S \
     --debug'[Debug]' \

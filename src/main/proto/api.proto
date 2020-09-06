@@ -64,7 +64,6 @@ message CompletionSuggestion {
 }
 
 message CompletionRequest {
-  optional string word = 1;
   optional string line = 2;
 }
 

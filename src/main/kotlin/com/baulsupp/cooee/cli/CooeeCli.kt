@@ -29,6 +29,7 @@ import picocli.CommandLine
 import picocli.CommandLine.*
 import java.io.Closeable
 import java.io.File
+import java.io.IOException
 import java.util.ArrayList
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -72,7 +73,7 @@ class Main : Runnable {
   suspend fun runCommand(): Int {
     when {
       complete != null -> completeOption(complete!!)
-      commandComplete -> showCompletions(arguments.last(), arguments.joinToString(" "), Shell.ZSH)
+      commandComplete -> showCompletions(arguments.joinToString(" "), Shell.ZSH)
       arguments.isEmpty() || arguments == listOf("") -> this@Main.showTodos()
       else -> this@Main.cooeeCommand(open, arguments)
     }
@@ -202,6 +203,9 @@ class Main : Runnable {
         runCommand()
       } catch (ue: UsageException) {
         outputHandler.showError(ue.message)
+      } catch (ioe: IOException) {
+        // ignore
+        outputHandler.showError(ioe.message)
       } finally {
         close()
       }

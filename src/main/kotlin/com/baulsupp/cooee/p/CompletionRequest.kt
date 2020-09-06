@@ -19,12 +19,6 @@ import okio.ByteString
 
 class CompletionRequest(
   @field:WireField(
-    tag = 1,
-    adapter = "com.squareup.wire.ProtoAdapter#STRING"
-  )
-  @JvmField
-  val word: String? = null,
-  @field:WireField(
     tag = 2,
     adapter = "com.squareup.wire.ProtoAdapter#STRING"
   )
@@ -34,7 +28,6 @@ class CompletionRequest(
 ) : Message<CompletionRequest, CompletionRequest.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
     val builder = Builder()
-    builder.word = word
     builder.line = line
     builder.addUnknownFields(unknownFields)
     return builder
@@ -44,7 +37,6 @@ class CompletionRequest(
     if (other === this) return true
     if (other !is CompletionRequest) return false
     return unknownFields == other.unknownFields
-        && word == other.word
         && line == other.line
   }
 
@@ -52,7 +44,6 @@ class CompletionRequest(
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
-      result = result * 37 + word.hashCode()
       result = result * 37 + line.hashCode()
       super.hashCode = result
     }
@@ -61,28 +52,16 @@ class CompletionRequest(
 
   override fun toString(): String {
     val result = mutableListOf<String>()
-    if (word != null) result += """word=${sanitize(word)}"""
     if (line != null) result += """line=${sanitize(line)}"""
     return result.joinToString(prefix = "CompletionRequest{", separator = ", ", postfix = "}")
   }
 
-  fun copy(
-    word: String? = this.word,
-    line: String? = this.line,
-    unknownFields: ByteString = this.unknownFields
-  ): CompletionRequest = CompletionRequest(word, line, unknownFields)
+  fun copy(line: String? = this.line, unknownFields: ByteString = this.unknownFields):
+      CompletionRequest = CompletionRequest(line, unknownFields)
 
   class Builder : Message.Builder<CompletionRequest, Builder>() {
     @JvmField
-    var word: String? = null
-
-    @JvmField
     var line: String? = null
-
-    fun word(word: String?): Builder {
-      this.word = word
-      return this
-    }
 
     fun line(line: String?): Builder {
       this.line = line
@@ -90,7 +69,6 @@ class CompletionRequest(
     }
 
     override fun build(): CompletionRequest = CompletionRequest(
-      word = word,
       line = line,
       unknownFields = buildUnknownFields()
     )
@@ -104,28 +82,23 @@ class CompletionRequest(
       "type.googleapis.com/com.baulsupp.cooee.p.CompletionRequest"
     ) {
       override fun encodedSize(value: CompletionRequest): Int = 
-        ProtoAdapter.STRING.encodedSizeWithTag(1, value.word) +
         ProtoAdapter.STRING.encodedSizeWithTag(2, value.line) +
         value.unknownFields.size
 
       override fun encode(writer: ProtoWriter, value: CompletionRequest) {
-        ProtoAdapter.STRING.encodeWithTag(writer, 1, value.word)
         ProtoAdapter.STRING.encodeWithTag(writer, 2, value.line)
         writer.writeBytes(value.unknownFields)
       }
 
       override fun decode(reader: ProtoReader): CompletionRequest {
-        var word: String? = null
         var line: String? = null
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
-            1 -> word = ProtoAdapter.STRING.decode(reader)
             2 -> line = ProtoAdapter.STRING.decode(reader)
             else -> reader.readUnknownField(tag)
           }
         }
         return CompletionRequest(
-          word = word,
           line = line,
           unknownFields = unknownFields
         )
