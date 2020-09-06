@@ -44,7 +44,7 @@ enum SuggestionType {
   LIST = 4;
 
   /** Shows a preview or information (link is secondary to message) */
-  INFO = 5;
+  INFORMATION = 5;
 }
 
 message CommandSuggestion {
@@ -87,4 +87,17 @@ message TokenRequest {
 
 message TokenResponse {
   optional string token = 1;
+}
+
+enum LogSeverity {
+  FATAL = 0;
+  SEVERE = 1;
+  INFO = 2;
+  WARN = 3;
+  TRACE = 4;
+}
+
+message LogRequest {
+  optional string message = 1;
+  optional LogSeverity severity = 2;
 }

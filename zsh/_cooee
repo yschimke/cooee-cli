@@ -2,14 +2,20 @@
 #autoload
 
 _cooee_complete() {
-#    compadd "$line aaaaaa"
-    completes=($(cooee --command-complete "$line"))
-    compadd $completes
+    local -a subcmds
+#    subcmds=('github' 'github:"Github Website"' -- 'strava' 'strava:"Strava website"' )
+    subcmds=('github:"Github Website"' 'strava:"Strava website"' )
+    _describe 'cooee' subcmds
+#    completes=($(cooee --command-complete "$line"))
+#    compadd $completes
 }
 
 _cooee() {
   local context state state_descr line
   typeset -A opt_args
+
+#  zstyle ':completion:$curcontext:' group-name '' # group results by category
+#  zstyle ':completion:$curcontext:' menu select
 
   _arguments -C -S \
     --debug'[Debug]' \

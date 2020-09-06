@@ -37,7 +37,7 @@ enum class SuggestionType(
   /**
    * Shows a preview or information (link is secondary to message)
    */
-  INFO(5);
+  INFORMATION(5);
 
   companion object {
     @JvmField
@@ -54,7 +54,7 @@ enum class SuggestionType(
       2 -> COMMAND
       3 -> PREFIX
       4 -> LIST
-      5 -> INFO
+      5 -> INFORMATION
       else -> null
     }
   }

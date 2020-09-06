@@ -1,6 +1,7 @@
 package com.baulsupp.cooee.cli
 
 import com.baulsupp.cooee.cli.LoggingUtil.Companion.configureLogging
+import com.baulsupp.cooee.p.LogRequest
 import com.baulsupp.cooee.p.TokenRequest
 import com.baulsupp.cooee.p.TokenResponse
 import com.baulsupp.oksocial.output.*
@@ -71,7 +72,7 @@ class Main : Runnable {
   suspend fun runCommand(): Int {
     when {
       complete != null -> completeOption(complete!!)
-      commandComplete -> showCompletions(arguments.last(), arguments.joinToString(" "))
+      commandComplete -> showCompletions(arguments.last(), arguments.joinToString(" "), Shell.ZSH)
       arguments.isEmpty() || arguments == listOf("") -> this@Main.showTodos()
       else -> this@Main.cooeeCommand(open, arguments)
     }
@@ -148,8 +149,13 @@ class Main : Runnable {
         payloadMimeType = PayloadMimeType("application/json", "message/x.rsocket.composite-metadata.v0")
         acceptor = {
           RSocketRequestHandler {
+            fireAndForget = {
+              val request = moshi.adapter(LogRequest::class.java).fromJson(it.data.readText())
+              System.err.println("Error: ${Help.Ansi.AUTO.string(" @|yellow [${request?.severity}] ${request?.message}|@")}")
+            }
             requestResponse = {
-              val request = moshi.adapter<TokenRequest>(TokenRequest::class.java).fromJson(it.data.readText())
+              // TokenRequest
+              val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())
               val response = tokenResponse(request)
               Payload(moshi.adapter<TokenResponse>(TokenResponse::class.java).toJson(response))
             }
