@@ -1,12 +1,34 @@
 package com.baulsupp.cooee.cli
 
-import okhttp3.internal.http2.Http2
-import java.util.logging.ConsoleHandler
-import java.util.logging.Level
-import java.util.logging.LogManager
-import java.util.logging.LogRecord
-import java.util.logging.Logger
-import java.util.logging.SimpleFormatter
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter.ISO_LOCAL_TIME
+import java.time.format.DateTimeFormatterBuilder
+import java.time.temporal.ChronoField
+import java.util.logging.*
+
+object OneLineLogFormat : Formatter() {
+  private val d = ISO_LOCAL_TIME
+
+  private val offset = ZoneOffset.systemDefault()
+
+  override fun format(record: LogRecord): String {
+    val message = formatMessage(record)
+
+    val time = Instant.ofEpochMilli(record.millis).atZone(offset)
+
+    return if (record.thrown != null) {
+      val sw = StringWriter(4096)
+      val pw = PrintWriter(sw)
+      record.thrown.printStackTrace(pw)
+      String.format("%s\t%s%n%s%n",d.format(time), message, sw.toString())
+    } else {
+      String.format("%s\t%s%n", d.format(time), message)
+    }
+  }
+}
 
 class LoggingUtil {
   companion object {
@@ -18,7 +40,7 @@ class LoggingUtil {
         val handler = ConsoleHandler()
 
           handler.level = Level.ALL
-          handler.formatter = OneLineLogFormat()
+          handler.formatter = OneLineLogFormat
           val activeLogger = getLogger("")
           activeLogger.addHandler(handler)
           activeLogger.level = Level.ALL

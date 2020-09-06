@@ -1,34 +1,20 @@
 package com.baulsupp.cooee.cli
 
-import com.baulsupp.cooee.cli.Main.Companion.logger
-import com.baulsupp.oksocial.output.UsageException
-import java.util.logging.Level
-import java.util.logging.Logger
+import com.baulsupp.cooee.p.CompletionRequest
+import com.baulsupp.cooee.p.CompletionResponse
 
-suspend fun Main.completeCommand(line: String) {
-  try {
-    if (line.isEmpty()) {
-      val completionList: TodoResult = todoQuery()
-      outputHandler.info(completionList.todos.joinToString("\n") {
-        it.line.split("\\s+".toRegex()).last()
-      })
-    } else {
-      val completionList: CompletionResult =
-        client.query<CompletionResult>("${apiHost()}/api/v0/completion?q=${line.replace(" ", "+")}")
-      if (completionList.completions != null) {
-        outputHandler.info(completionList.completions.joinToString("\n") {
-          it.word
-        })
-      } else {
-        outputHandler.info(completionList.suggestions!!.joinToString("\n") {
-          it.line.split("\\s+".toRegex()).last()
-        })
-      }
-    }
-  } catch (ue: UsageException) {
-    throw ue
-  } catch (e: Exception) {
-    logger.log(Level.FINE, "failure during url completion", e)
-  }
+enum class Shell {
+  BASH, ZSH
 }
 
+suspend fun Main.completeCommand(word: String, line: String) =
+  rsocketClient.requestResponse<CompletionRequest, CompletionResponse>("complete", CompletionRequest(word = word, line = line))
+
+suspend fun Main.showCompletions(word: String, line: String, shell: Shell) {
+  val completionList = completeCommand(word, line)
+
+  when (shell) {
+    Shell.ZSH -> outputHandler.info(completionList.completions.mapNotNull { it.word }.joinToString("\n"))
+    Shell.BASH -> outputHandler.info(completionList.completions.mapNotNull { it.word }.joinToString("\n"))
+  }
+}

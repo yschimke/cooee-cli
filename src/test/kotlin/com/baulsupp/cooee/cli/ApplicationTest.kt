@@ -7,6 +7,6 @@ import org.junit.Test
 class ApplicationTest {
   @Test
   fun x() {
-    Main.main("cooee")
+    Main.main("strava", "lastrun")
   }
 }

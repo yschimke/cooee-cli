@@ -1,10 +1,14 @@
 package com.baulsupp.cooee.cli
 
+import com.baulsupp.okurl.credentials.DefaultToken
+import com.baulsupp.okurl.credentials.Token
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.squareup.wire.WireJsonAdapterFactory
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
@@ -33,6 +37,8 @@ object Rfc3339InstantJsonAdapter : JsonAdapter<Instant>() {
 }
 
 val moshi = Moshi.Builder()
+  .add(WireJsonAdapterFactory())
+  .add(KotlinJsonAdapterFactory())
   .add(Date::class.java, Rfc3339DateJsonAdapter().nullSafe())
   .add(Instant::class.java, Rfc3339InstantJsonAdapter.nullSafe())
   .build()!!
@@ -97,12 +103,18 @@ suspend fun Call.await(): Response {
 
 class ClientException(val responseMessage: String, val code: Int) : IOException("$code: $responseMessage")
 
-
 fun request(
   url: String? = null,
+  tokenSet: Token = DefaultToken,
   init: Request.Builder.() -> Unit = {}
-): Request = requestBuilder(url).apply(init).build()
+): Request = requestBuilder(url, tokenSet).apply(init).build()
 
 fun requestBuilder(
-  url: String? = null
-): Request.Builder = Request.Builder().apply { if (url != null) url(url) }
+  url: String? = null,
+  tokenSet: Token = DefaultToken,
+): Request.Builder = Request.Builder().apply {
+  if (url != null) url(url)
+}.tag(
+  Token::class.java,
+  tokenSet
+)

@@ -1,53 +1,42 @@
 package com.baulsupp.cooee.cli
 
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import okhttp3.Response
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.ByteBufUtil
+import io.netty.buffer.CompositeByteBuf
+import io.rsocket.kotlin.RSocket
+import io.rsocket.kotlin.payload.Payload
+import io.rsocket.metadata.CompositeMetadataCodec
+import io.rsocket.metadata.TaggingMetadataCodec
+import io.rsocket.metadata.WellKnownMimeType
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
-suspend fun Main.todoCommand() = coroutineScope {
-  val queryResult = todoQuery()
-
-  for (result in queryResult.todos) {
-    outputHandler.info(result.line + ":" + result.message)
-    if (result.url != null) {
-      outputHandler.info(result.url)
-    }
-    outputHandler.info("")
-  }
+fun buildMetadata(route: String): ByteArray? {
+  val compositeByteBuf = CompositeByteBuf(ByteBufAllocator.DEFAULT, false, 1)
+  val routingMetadata = TaggingMetadataCodec.createRoutingMetadata(ByteBufAllocator.DEFAULT, listOf(route))
+  CompositeMetadataCodec.encodeAndAddMetadata(compositeByteBuf, ByteBufAllocator.DEFAULT,
+    WellKnownMimeType.MESSAGE_RSOCKET_ROUTING, routingMetadata.content)
+  return ByteBufUtil.getBytes(compositeByteBuf)
 }
 
-suspend fun Main.cooeeCommand(runArguments: List<String>): Int = coroutineScope {
-  val result = bounceQuery(runArguments)
+suspend inline fun <reified Request, reified Response> RSocket.requestResponse(route: String, request: Request): Response {
+  val requestAdapter = moshi.adapter(Request::class.java)
+  val responseAdapter = moshi.adapter(Response::class.java)
 
-  if (result.location != null || result.message != null || result.image != null) {
-    var imageResponse: Deferred<Response>? = null
-    if (result.image != null) {
-      imageResponse = async { client.execute(request(result.image)) }
-    }
-    if (result.message != null) {
-      outputHandler.info(result.message)
-    }
-    if (result.location != null) {
-      @Suppress("EXPERIMENTAL_API_USAGE")
-      launch(start = CoroutineStart.ATOMIC) {
-        outputHandler.openLink(result.location)
-      }
-    }
-    if (imageResponse != null) {
-      outputHandler.showOutput(imageResponse.await())
-    }
-    0
-  } else {
-    outputHandler.showError("No results found")
-    -1
-  }
+  val requestPayload = Payload(requestAdapter.toJson(request).toByteArray(), buildMetadata(route))
+
+  val responsePayload = requestResponse(requestPayload)
+
+  return responseAdapter.fromJson(responsePayload.data.readText()) ?: throw IllegalStateException("Null response")
 }
 
-suspend fun Main.bounceQuery(runArguments: List<String>) =
-  client.query<GoResult>("${apiHost()}/api/v0/goinfo?q=${runArguments.joinToString(" ")}")
+inline fun <reified Request, reified Response> RSocket.requestStream(route: String, request: Request): Flow<Response> {
+  val requestAdapter = moshi.adapter(Request::class.java)
+  val responseAdapter = moshi.adapter(Response::class.java)
 
-suspend fun Main.todoQuery() =
-  client.query<TodoResult>("${apiHost()}/api/v0/todo")
+  val requestPayload = Payload(requestAdapter.toJson(request).toByteArray(), buildMetadata(route))
+
+  return requestStream(requestPayload).map {
+    responseAdapter.fromJson(it.data.readText()) ?: throw IllegalStateException("Null response")
+  }
+}

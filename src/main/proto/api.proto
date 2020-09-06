@@ -1,0 +1,103 @@
+syntax = "proto2";
+
+package com.baulsupp.cooee.p;
+
+option java_package = "com.baulsupp.cooee.p";
+
+message ImageUrl {
+  optional string url = 1;
+}
+
+enum CommandStatus {
+  UNDEFINED = 0;
+  CLIENT_ACTION = 1;
+  DONE = 2;
+  REDIRECT = 3;
+  REQUEST_ERROR = 4;
+  SERVER_ERROR = 5;
+}
+
+message CommandRequest {
+  repeated string parsed_command = 1;
+}
+
+message CommandResponse {
+  optional string location = 1;
+  optional string message = 2;
+  optional ImageUrl image_url = 3;
+  optional CommandStatus status = 4;
+}
+
+enum SuggestionType {
+  UNKNOWN = 0;
+
+  /** Returns a link to redirect (message is secondary to link) */
+  LINK = 1;
+
+  /** Returns a command that can be executed via a POST, with preview etc */
+  COMMAND = 2;
+
+  /** Returns a command prefix that allows further comment */
+  PREFIX = 3;
+
+  /** Returns subcommands */
+  LIST = 4;
+
+  /** Shows a preview or information (link is secondary to message) */
+  INFORMATION = 5;
+}
+
+message CommandSuggestion {
+  optional string command = 1;
+  optional string provider = 2;
+  optional string description = 3;
+  optional SuggestionType type = 4;
+  repeated CommandSuggestion children = 5;
+  optional string url = 6;
+  optional string message = 7;
+}
+
+message CompletionSuggestion {
+  optional string word = 1;
+  optional string line = 2;
+  optional CommandSuggestion command = 3;
+}
+
+message CompletionRequest {
+  optional string word = 1;
+  optional string line = 2;
+}
+
+message CompletionResponse {
+  repeated CompletionSuggestion completions = 1;
+}
+
+message TodoRequest {
+  optional uint32 limit = 1;
+}
+
+message TodoResponse {
+  repeated CommandSuggestion todos = 1;
+}
+
+message TokenRequest {
+  optional string service = 1;
+  optional string name = 2;
+}
+
+message TokenResponse {
+  optional string token = 1;
+}
+
+enum LogSeverity {
+  FATAL = 0;
+  SEVERE = 1;
+  INFO = 2;
+  WARN = 3;
+  TRACE = 4;
+}
+
+message LogRequest {
+  optional string message = 1;
+  optional LogSeverity severity = 2;
+}
