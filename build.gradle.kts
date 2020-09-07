@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
   kotlin("jvm") version "1.4.0"
@@ -59,12 +60,12 @@ graal {
   option("--no-fallback")
   option("--allow-incomplete-classpath")
 
-//  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-//    // May be possible without, but autodetection is problematic on Windows 10
-//    // see https://github.com/palantir/gradle-graal
-//    // see https://www.graalvm.org/docs/reference-manual/native-image/#prerequisites
-//    windowsVsVarsPath('C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat')
-//  }
+  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    // May be possible without, but autodetection is problematic on Windows 10
+    // see https://github.com/palantir/gradle-graal
+    // see https://www.graalvm.org/docs/reference-manual/native-image/#prerequisites
+    windowsVsVarsPath("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat")
+  }
 }
 
 dependencies {
@@ -75,7 +76,7 @@ dependencies {
 //  implementation("com.squareup.okhttp3:okhttp:4.8.1")
 //  implementation("com.squareup.okhttp3:logging-interceptor:4.8.1")
   implementation("com.squareup.okio:okio:2.7.0")
-  implementation("com.github.yschimke:oksocial-output:5.6")
+  implementation("com.github.yschimke:oksocial-output:5.7")
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
   implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
   implementation("io.jsonwebtoken:jjwt-jackson:0.11.2")
