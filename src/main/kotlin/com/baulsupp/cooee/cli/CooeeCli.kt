@@ -19,6 +19,7 @@ import io.rsocket.kotlin.RSocketRequestHandler
 import io.rsocket.kotlin.cancel
 import io.rsocket.kotlin.core.RSocketClientSupport
 import io.rsocket.kotlin.core.rSocket
+import io.rsocket.kotlin.keepalive.KeepAlive
 import io.rsocket.kotlin.payload.Payload
 import io.rsocket.kotlin.payload.PayloadMimeType
 import kotlinx.coroutines.runBlocking
@@ -30,14 +31,19 @@ import picocli.CommandLine.*
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
+import java.time.Duration
 import java.util.ArrayList
+import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
+import kotlin.time.toDuration
 
 /**
  * Simple command line tool to make a Coo.ee command.
  */
-@KtorExperimentalAPI
 @Command(name = "cooee", description = ["CLI for Coo.ee"],
   mixinStandardHelpOptions = true, version = ["dev"])
 class Main : Runnable {
@@ -139,6 +145,7 @@ class Main : Runnable {
     return builder
   }
 
+  @OptIn(ExperimentalTime::class)
   suspend fun buildClient(uri: String): RSocket {
     val client = HttpClient(OkHttp) {
       engine {
@@ -158,10 +165,11 @@ class Main : Runnable {
               // TokenRequest
               val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())
               val response = tokenResponse(request)
-              Payload(moshi.adapter<TokenResponse>(TokenResponse::class.java).toJson(response))
+              Payload(moshi.adapter(TokenResponse::class.java).toJson(response))
             }
           }
         }
+        keepAlive = KeepAlive(5.seconds)
       }
     }
 
