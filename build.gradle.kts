@@ -84,7 +84,11 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.0")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.3.9")
-  implementation("org.jline:jline:3.16.0")
+  implementation("org.jline:jline-console:3.16.0")
+  implementation("org.jline:jline-terminal:3.16.0")
+  implementation("org.jline:jline-terminal-jansi:3.16.0")
+  implementation("org.jline:jline-reader:3.16.0")
+  implementation("org.jline:jline-style:3.16.0")
   implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
   implementation("com.github.yschimke:okurl:2.21")
 
