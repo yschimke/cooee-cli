@@ -4,42 +4,53 @@ import com.baulsupp.cooee.cli.LoggingUtil.Companion.configureLogging
 import com.baulsupp.cooee.p.LogRequest
 import com.baulsupp.cooee.p.TokenRequest
 import com.baulsupp.cooee.p.TokenResponse
-import com.baulsupp.oksocial.output.*
+import com.baulsupp.oksocial.output.ConsoleHandler
+import com.baulsupp.oksocial.output.OutputHandler
+import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.AuthInterceptor
 import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.RenewingInterceptor
 import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.credentials.TokenSet
-import io.ktor.client.*
+import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.features.websocket.*
-import io.ktor.util.*
+import io.ktor.client.features.websocket.WebSockets
+import io.ktor.utils.io.core.ByteReadPacket
+import io.ktor.utils.io.core.readBytes
+import io.netty.buffer.Unpooled
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.RSocketRequestHandler
 import io.rsocket.kotlin.cancel
+import io.rsocket.kotlin.connection.LoggingConnection
 import io.rsocket.kotlin.core.RSocketClientSupport
 import io.rsocket.kotlin.core.rSocket
+import io.rsocket.kotlin.error.RSocketError
 import io.rsocket.kotlin.keepalive.KeepAlive
 import io.rsocket.kotlin.payload.Payload
 import io.rsocket.kotlin.payload.PayloadMimeType
+import io.rsocket.metadata.CompositeMetadata
+import io.rsocket.metadata.TaggingMetadata
+import io.rsocket.metadata.WellKnownMimeType
 import kotlinx.coroutines.runBlocking
-import okhttp3.*
+import okhttp3.Cache
+import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.logging.LoggingEventListener
 import picocli.CommandLine
-import picocli.CommandLine.*
+import picocli.CommandLine.Command
+import picocli.CommandLine.Help
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
-import java.time.Duration
+import java.nio.charset.StandardCharsets
 import java.util.ArrayList
-import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
-import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
-import kotlin.time.toDuration
 
 /**
  * Simple command line tool to make a Coo.ee command.
@@ -154,22 +165,41 @@ class Main : Runnable {
 
       install(WebSockets)
       install(RSocketClientSupport) {
-        payloadMimeType = PayloadMimeType("application/json", "message/x.rsocket.composite-metadata.v0")
+        payloadMimeType = PayloadMimeType("application/json",
+          "message/x.rsocket.composite-metadata.v0")
         acceptor = {
           RSocketRequestHandler {
             fireAndForget = {
-              val request = moshi.adapter(LogRequest::class.java).fromJson(it.data.readText())
-              System.err.println("Error: ${Help.Ansi.AUTO.string(" @|yellow [${request?.severity}] ${request?.message}|@")}")
+              val route = it.metadata?.let { parseRoute(it) }
+
+              if (route == "log") {
+                val request = moshi.adapter(LogRequest::class.java).fromJson(it.data.readText())
+                System.err.println("Error: ${
+                  Help.Ansi.AUTO.string(
+                    " @|yellow [${request?.severity}] ${request?.message}|@")
+                }")
+              } else {
+                throw RSocketError.ApplicationError("Unknown route: $route")
+              }
             }
             requestResponse = {
-              // TokenRequest
-              val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())
-              val response = tokenResponse(request)
-              Payload(moshi.adapter(TokenResponse::class.java).toJson(response))
+              val route = it.metadata?.let { parseRoute(it) }
+
+              if (route == "token") {
+                // TokenRequest
+                val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())
+                val response = tokenResponse(request)
+                Payload(moshi.adapter(TokenResponse::class.java).toJson(response))
+              } else {
+                throw RSocketError.ApplicationError("Unknown route: $route")
+              }
             }
           }
         }
         keepAlive = KeepAlive(5.seconds)
+        if (debug) {
+          plugin = plugin.copy(connection = listOf(::LoggingConnection))
+        }
       }
     }
 
@@ -179,6 +209,18 @@ class Main : Runnable {
         client.close()
       }
     }
+  }
+
+  fun parseRoute(metadata: ByteReadPacket): String? {
+    CompositeMetadata(Unpooled.wrappedBuffer(metadata.readBytes()), false).forEach {
+      if (it.mimeType == "message/x.rsocket.routing.v0") {
+        TaggingMetadata("message/x.rsocket.routing.v0", it.content).forEach { route ->
+          return route
+        }
+      }
+    }
+
+    return null
   }
 
   suspend fun tokenResponse(request: TokenRequest?): TokenResponse? {
