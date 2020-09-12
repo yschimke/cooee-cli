@@ -16,7 +16,7 @@ repositories {
   jcenter()
   mavenCentral()
   maven(url = "https://jitpack.io")
-  maven(url = "http://repo.maven.apache.org/maven2")
+  maven(url = "https://oss.jfrog.org/oss-snapshot-local")
 }
 
 group = "com.baulsupp"
@@ -73,9 +73,10 @@ dependencies {
   implementation("com.squareup.moshi:moshi:1.9.3")
   implementation("com.squareup.moshi:moshi-adapters:1.9.3")
   implementation("com.squareup.moshi:moshi-kotlin:1.9.3")
-//  implementation("com.squareup.okhttp3:okhttp:4.8.1")
-//  implementation("com.squareup.okhttp3:logging-interceptor:4.8.1")
-  implementation("com.squareup.okio:okio:2.7.0")
+  implementation("com.squareup.okhttp3:okhttp:4.9.0")
+  implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
+  implementation("com.squareup.okhttp3:okhttp-brotli:4.9.0")
+  implementation("com.squareup.okio:okio:2.8.0")
   implementation("com.github.yschimke:oksocial-output:5.7")
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
   implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
@@ -90,7 +91,7 @@ dependencies {
   implementation("org.jline:jline-reader:3.16.0")
   implementation("org.jline:jline-style:3.16.0")
   implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
-  implementation("com.github.yschimke:okurl:2.21")
+  implementation("com.github.yschimke:okurl:2.22")
 
   kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
   kapt("info.picocli:picocli-codegen:4.5.0")
@@ -103,7 +104,8 @@ dependencies {
   }
   implementation("io.github.classgraph:classgraph:4.8.87")
 
-  implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
+  implementation("io.rsocket.kotlin:rsocket-core-jvm:0.10.0-frame-logging-SNAPSHOT")
+  implementation("io.rsocket.kotlin:rsocket-transport-ktor-client:0.10.0-frame-logging-SNAPSHOT")
   implementation("io.ktor:ktor-network-tls:1.4.0")
   implementation("io.ktor:ktor-client-okhttp:1.4.0") {
     exclude(group= "com.squareup.okhttp3")

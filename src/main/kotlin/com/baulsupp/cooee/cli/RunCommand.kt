@@ -20,14 +20,10 @@ suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String
         try {
           client.execute(request(imageUrl, tokenSet = TokenValue(Oauth2Token("pk.eyJ1IjoieXNjaGlta2UiLCJhIjoiY2tlb3E5MWIyMWp4eDJ2azdraWg5cHkxYyJ9.UHmWRzY_VE7gqIjCwIAmNA"))))
         } catch (ce: ClientException) {
-          if (ce.code == 404) {
-            throw UsageException("image not found: $imageUrl")
-            null
-          } else if (ce.code == 401) {
-              throw UsageException("unauthorised: $imageUrl")
-              null
-          } else {
-            throw ce
+          when (ce.code) {
+            404 -> throw UsageException("image not found: $imageUrl")
+            401 -> throw UsageException("unauthorised: $imageUrl")
+            else -> throw ce
           }
         }
       }
