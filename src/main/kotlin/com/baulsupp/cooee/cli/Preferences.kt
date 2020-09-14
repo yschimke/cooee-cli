@@ -1,6 +1,9 @@
 package com.baulsupp.cooee.cli
 
 import com.squareup.moshi.Moshi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import okio.buffer
 import okio.source
 import java.io.File
@@ -13,18 +16,22 @@ data class Preferences(
   val web: String = "https://www.coo.ee",
   val descriptionLength: Int = 20
 ) {
+  suspend fun save() {
+    withContext(Dispatchers.IO) {
+      prefFile.writeText(moshi.adapter(Preferences::class.java).toJson(this@Preferences))
+    }
+  }
+
   companion object {
     private val logger = Logger.getLogger(Preferences::class.java.name)
+    val prefFile = File(Main.configDir, "prefs.json")
 
     val local: Preferences by lazy {
-      val prefFile = File(System.getenv("HOME"), ".cooee/prefs.json")
-
       if (prefFile.exists()) {
         try {
-          val moshi = Moshi.Builder().build()
           moshi.adapter(Preferences::class.java).fromJson(prefFile.source().buffer()) ?: Preferences()
         } catch (e: Exception) {
-          logger.log(Level.FINE, "failed loading preferences", e)
+          logger.log(Level.INFO, "failed loading preferences", e)
           Preferences()
         }
       } else {

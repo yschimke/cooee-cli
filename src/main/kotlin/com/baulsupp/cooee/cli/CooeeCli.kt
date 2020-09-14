@@ -108,30 +108,6 @@ class Main : Runnable {
     return 0
   }
 
-  suspend fun login() {
-    coroutineScope {
-      launch(start = CoroutineStart.ATOMIC) {
-        SimpleWebServer.forCode().use { s ->
-          outputHandler.openLink(
-            "https://www.coo.ee/user/jwt?callback=http://localhost:3000/callback")
-
-          val token = s.waitForCode()
-
-          val jwt = parseClaims(token)
-          outputHandler.info("JWT: $jwt")
-
-          credentialsStore.set(CooeeServiceDefinition, DefaultToken.name, token)
-        }
-      }
-    }
-  }
-
-  private fun parseClaims(token: String): Claims? {
-    // TODO verify using public signing key
-    val unsignedToken = token.substring(0, token.lastIndexOf('.') + 1)
-    return Jwts.parserBuilder().build().parseClaimsJwt(unsignedToken).body
-  }
-
   private fun listOptions(option: String): Collection<String> {
     return when (option) {
       "option-complete" -> listOf("command-complete", "option-complete")
@@ -163,7 +139,7 @@ class Main : Runnable {
       client = clientBuilder.build()
     }
 
-    rsocketClient = buildClient("ws://localhost:8080/rsocket")
+    rsocketClient = buildClient(Preferences.local.api)
   }
 
   private fun createClientBuilder(): OkHttpClient.Builder {
@@ -285,6 +261,7 @@ class Main : Runnable {
 
       try {
         runCommand()
+        System.exit(-1)
       } catch (ue: UsageException) {
         outputHandler.showError(ue.message)
       } catch (ioe: IOException) {
