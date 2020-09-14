@@ -1,6 +1,7 @@
 package com.baulsupp.cooee.cli
 
 import com.baulsupp.cooee.cli.LoggingUtil.Companion.configureLogging
+import com.baulsupp.cooee.cli.auth.CooeeServiceDefinition
 import com.baulsupp.cooee.p.LogRequest
 import com.baulsupp.cooee.p.TokenRequest
 import com.baulsupp.cooee.p.TokenResponse
@@ -12,6 +13,8 @@ import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.RenewingInterceptor
 import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.credentials.TokenSet
+import io.jsonwebtoken.Claims
+import io.jsonwebtoken.Jwts
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.features.websocket.WebSockets
@@ -31,6 +34,9 @@ import io.rsocket.kotlin.payload.PayloadMimeType
 import io.rsocket.metadata.CompositeMetadata
 import io.rsocket.metadata.TaggingMetadata
 import io.rsocket.metadata.WellKnownMimeType
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -70,6 +76,9 @@ class Main : Runnable {
   @Option(names = ["--open"], description = ["Open External Links"])
   var open: Boolean = false
 
+  @Option(names = ["--login"], description = ["Login to www.coo.ee"])
+  var login: Boolean = false
+
   @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
   var arguments: MutableList<String> = ArrayList()
 
@@ -89,6 +98,7 @@ class Main : Runnable {
 
   suspend fun runCommand(): Int {
     when {
+      login -> login()
       complete != null -> completeOption(complete!!)
       commandComplete -> showCompletions(arguments.joinToString(" "), Shell.ZSH)
       arguments.isEmpty() || arguments == listOf("") -> this@Main.showTodos()
@@ -96,6 +106,30 @@ class Main : Runnable {
     }
 
     return 0
+  }
+
+  suspend fun login() {
+    coroutineScope {
+      launch(start = CoroutineStart.ATOMIC) {
+        SimpleWebServer.forCode().use { s ->
+          outputHandler.openLink(
+            "https://www.coo.ee/user/jwt?callback=http://localhost:3000/callback")
+
+          val token = s.waitForCode()
+
+          val jwt = parseClaims(token)
+          outputHandler.info("JWT: $jwt")
+
+          credentialsStore.set(CooeeServiceDefinition, DefaultToken.name, token)
+        }
+      }
+    }
+  }
+
+  private fun parseClaims(token: String): Claims? {
+    // TODO verify using public signing key
+    val unsignedToken = token.substring(0, token.lastIndexOf('.') + 1)
+    return Jwts.parserBuilder().build().parseClaimsJwt(unsignedToken).body
   }
 
   private fun listOptions(option: String): Collection<String> {
