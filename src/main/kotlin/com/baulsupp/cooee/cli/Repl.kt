@@ -3,7 +3,6 @@ package com.baulsupp.cooee.cli
 import kotlinx.coroutines.runBlocking
 import org.fusesource.jansi.AnsiConsole
 import org.jline.reader.Candidate
-import org.jline.reader.Completer
 import org.jline.reader.EndOfFileException
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
