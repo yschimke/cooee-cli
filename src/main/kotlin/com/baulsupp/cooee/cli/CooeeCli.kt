@@ -13,13 +13,15 @@ import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.RenewingInterceptor
 import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.credentials.TokenSet
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.Jwts
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.features.websocket.WebSockets
 import io.ktor.utils.io.core.ByteReadPacket
 import io.ktor.utils.io.core.readBytes
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.ByteBufAllocator.DEFAULT
+import io.netty.buffer.ByteBufUtil
+import io.netty.buffer.CompositeByteBuf
 import io.netty.buffer.Unpooled
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.RSocketRequestHandler
@@ -31,12 +33,14 @@ import io.rsocket.kotlin.error.RSocketError
 import io.rsocket.kotlin.keepalive.KeepAlive
 import io.rsocket.kotlin.payload.Payload
 import io.rsocket.kotlin.payload.PayloadMimeType
+import io.rsocket.metadata.AuthMetadataCodec
 import io.rsocket.metadata.CompositeMetadata
+import io.rsocket.metadata.CompositeMetadataCodec
+import io.rsocket.metadata.RoutingMetadata
 import io.rsocket.metadata.TaggingMetadata
+import io.rsocket.metadata.TaggingMetadataCodec
+import io.rsocket.metadata.TaggingMetadataCodec.createTaggingContent
 import io.rsocket.metadata.WellKnownMimeType
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -51,7 +55,6 @@ import picocli.CommandLine.Parameters
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
-import java.nio.charset.StandardCharsets
 import java.util.ArrayList
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -168,6 +171,8 @@ class Main : Runnable {
 
   @OptIn(ExperimentalTime::class)
   suspend fun buildClient(uri: String): RSocket {
+    val setupPayload = buildSetupPayload() ?: Payload.Empty
+
     val client = HttpClient(OkHttp) {
       engine {
         preconfigured = client
@@ -177,6 +182,9 @@ class Main : Runnable {
       install(RSocketClientSupport) {
         payloadMimeType = PayloadMimeType("application/json",
           "message/x.rsocket.composite-metadata.v0")
+
+        this.setupPayload = setupPayload
+
         acceptor = {
           RSocketRequestHandler {
             fireAndForget = {
@@ -213,12 +221,28 @@ class Main : Runnable {
       }
     }
 
-    return client.rSocket(uri, uri.startsWith("wss")).also {
+    return client.rSocket(uri, secure = uri.startsWith("wss")).also {
       closeables.add(0) {
         it.cancel()
         client.close()
       }
     }
+  }
+
+  suspend fun buildSetupPayload(): Payload? {
+    val token = credentialsStore.get(CooeeServiceDefinition, DefaultToken.name)
+
+    if (token != null) {
+      val routingMetadata = AuthMetadataCodec.encodeBearerMetadata(DEFAULT, token.toCharArray())
+      val compositeByteBuf = CompositeByteBuf(DEFAULT, false, 1)
+      CompositeMetadataCodec.encodeAndAddMetadata(compositeByteBuf, DEFAULT,
+        WellKnownMimeType.MESSAGE_RSOCKET_AUTHENTICATION, routingMetadata)
+      val metadataBytes = ByteBufUtil.getBytes(compositeByteBuf)
+
+      return Payload(byteArrayOf(), metadataBytes)
+    }
+
+    return null
   }
 
   fun parseRoute(metadata: ByteReadPacket): String? {
@@ -237,12 +261,14 @@ class Main : Runnable {
     val serviceName = request!!.service ?: return null
 
     val service = services.find { it.name() == serviceName }!!
-    val tokenString = service.getTokenString(serviceName, request)
+    val tokenString = service.getTokenString(request)
 
     return TokenResponse(token = tokenString)
   }
 
-  suspend fun <T> AuthInterceptor<T>.getTokenString(serviceName: String, request: TokenRequest): String? {
+  suspend fun <T> AuthInterceptor<T>.getTokenString(
+    request: TokenRequest
+  ): String? {
     val tokenSet = request.name?.let { TokenSet(it) } ?: DefaultToken
     val token = credentialsStore.get(serviceDefinition, tokenSet) ?: return null
     return serviceDefinition.formatCredentialsString(token)
@@ -288,7 +314,6 @@ class Main : Runnable {
       it.mkdirs()
     }
     val cacheDir = File(configDir, "cache")
-    val tokenFile = File(configDir, "token")
 
     val logger by lazy { Logger.getLogger("main") }
 
