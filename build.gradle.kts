@@ -2,14 +2,14 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  kotlin("jvm") version "1.4.0"
-  kotlin("kapt") version "1.4.0"
+  kotlin("jvm") version "1.4.10"
+  kotlin("kapt") version "1.4.10"
   `maven-publish`
   application
   id("net.nemerosa.versioning") version "2.13.1"
   id("com.diffplug.spotless") version "5.1.0"
   id("com.palantir.graal") version "0.7.1-15-g62b5090"
-  id("com.squareup.wire") version "3.2.2"
+  id("com.squareup.wire") version "3.3.0"
 }
 
 repositories {
@@ -116,14 +116,15 @@ dependencies {
 
   implementation("io.rsocket:rsocket-core:1.0.2")
 
-  api("com.squareup.wire:wire-runtime:3.2.2")
-  api("com.squareup.wire:wire-grpc-client:3.2.2") {
+  implementation("com.squareup.wire:wire-runtime:3.3.0")
+  implementation("com.squareup.wire:wire-moshi-adapter:3.3.0")
+  implementation("com.squareup.wire:wire-grpc-client:3.3.0") {
     exclude(group= "com.squareup.okhttp3")
   }
-  api("com.squareup.wire:wire-moshi-adapter:3.2.2")
+  implementation("com.squareup.wire:wire-moshi-adapter:3.3.0")
 
-  testImplementation("org.jetbrains.kotlin:kotlin-test:1.4.0")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.0")
+  testImplementation("org.jetbrains.kotlin:kotlin-test:1.4.10")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.10")
 
   testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.2")
 }

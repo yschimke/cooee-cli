@@ -1,11 +1,12 @@
-syntax = "proto2";
+syntax = "proto3";
+import "google/protobuf/wrappers.proto";
 
 package com.baulsupp.cooee.p;
 
 option java_package = "com.baulsupp.cooee.p";
 
 message ImageUrl {
-  optional string url = 1;
+  string url = 1;
 }
 
 enum CommandStatus {
@@ -22,10 +23,10 @@ message CommandRequest {
 }
 
 message CommandResponse {
-  optional string location = 1;
-  optional string message = 2;
-  optional ImageUrl image_url = 3;
-  optional CommandStatus status = 4;
+  google.protobuf.StringValue location = 1;
+  google.protobuf.StringValue message = 2;
+  ImageUrl image_url = 3;
+  CommandStatus status = 4;
 }
 
 enum SuggestionType {
@@ -48,23 +49,23 @@ enum SuggestionType {
 }
 
 message CommandSuggestion {
-  optional string command = 1;
-  optional string provider = 2;
-  optional string description = 3;
-  optional SuggestionType type = 4;
+  string command = 1;
+  string provider = 2;
+  string description = 3;
+  SuggestionType type = 4;
   repeated CommandSuggestion children = 5;
-  optional string url = 6;
-  optional string message = 7;
+  google.protobuf.StringValue url = 6;
+  google.protobuf.StringValue message = 7;
 }
 
 message CompletionSuggestion {
-  optional string word = 1;
-  optional string line = 2;
-  optional CommandSuggestion command = 3;
+  string word = 1;
+  string line = 2;
+  CommandSuggestion command = 3;
 }
 
 message CompletionRequest {
-  optional string line = 2;
+  string line = 2;
 }
 
 message CompletionResponse {
@@ -72,7 +73,7 @@ message CompletionResponse {
 }
 
 message TodoRequest {
-  optional uint32 limit = 1;
+  google.protobuf.UInt32Value limit = 1;
 }
 
 message TodoResponse {
@@ -80,12 +81,12 @@ message TodoResponse {
 }
 
 message TokenRequest {
-  optional string service = 1;
-  optional string name = 2;
+  string service = 1;
+  google.protobuf.StringValue name = 2;
 }
 
 message TokenResponse {
-  optional string token = 1;
+  google.protobuf.StringValue token = 1;
 }
 
 enum LogSeverity {
@@ -97,6 +98,6 @@ enum LogSeverity {
 }
 
 message LogRequest {
-  optional string message = 1;
-  optional LogSeverity severity = 2;
+  string message = 1;
+  LogSeverity severity = 2;
 }

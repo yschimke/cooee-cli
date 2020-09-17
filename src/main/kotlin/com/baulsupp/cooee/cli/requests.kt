@@ -21,21 +21,22 @@ fun buildMetadata(route: String): ByteArray? {
 
 suspend inline fun <reified Request, reified Response> RSocket.requestResponse(route: String, request: Request): Response {
   val requestAdapter = moshi.adapter(Request::class.java)
-  val responseAdapter = moshi.adapter(Response::class.java)
-
-  val requestPayload = Payload(requestAdapter.toJson(request).toByteArray(), buildMetadata(route))
+  val toJson = requestAdapter.toJson(request)
+  val requestPayload = Payload(toJson.toByteArray(), buildMetadata(route))
 
   val responsePayload = requestResponse(requestPayload)
 
-  return responseAdapter.fromJson(responsePayload.data.readText()) ?: throw IllegalStateException("Null response")
+  val readText = responsePayload.data.readText()
+  val responseAdapter = moshi.adapter(Response::class.java)
+  return responseAdapter.fromJson(readText).also { println(it) } ?: throw IllegalStateException("Null response")
 }
 
 inline fun <reified Request, reified Response> RSocket.requestStream(route: String, request: Request): Flow<Response> {
   val requestAdapter = moshi.adapter(Request::class.java)
+  val toJson = requestAdapter.toJson(request)
+  val requestPayload = Payload(toJson.toByteArray(), buildMetadata(route))
+
   val responseAdapter = moshi.adapter(Response::class.java)
-
-  val requestPayload = Payload(requestAdapter.toJson(request).toByteArray(), buildMetadata(route))
-
   return requestStream(requestPayload).map {
     responseAdapter.fromJson(it.data.readText()) ?: throw IllegalStateException("Null response")
   }
