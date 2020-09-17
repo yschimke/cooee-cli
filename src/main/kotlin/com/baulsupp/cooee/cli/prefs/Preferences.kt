@@ -1,5 +1,7 @@
-package com.baulsupp.cooee.cli
+package com.baulsupp.cooee.cli.prefs
 
+import com.baulsupp.cooee.cli.Main
+import com.baulsupp.cooee.cli.util.moshi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okio.buffer

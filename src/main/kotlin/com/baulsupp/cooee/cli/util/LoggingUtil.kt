@@ -1,4 +1,4 @@
-package com.baulsupp.cooee.cli
+package com.baulsupp.cooee.cli.util
 
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -26,7 +26,7 @@ object OneLineLogFormat : Formatter() {
       val sw = StringWriter(4096)
       val pw = PrintWriter(sw)
       record.thrown.printStackTrace(pw)
-      String.format("%s\t%s%n%s%n",d.format(time), message, sw.toString())
+      String.format("%s\t%s%n%s%n", d.format(time), message, sw.toString())
     } else {
       String.format("%s\t%s%n", d.format(time), message)
     }

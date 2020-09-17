@@ -1,5 +1,9 @@
-package com.baulsupp.cooee.cli
+package com.baulsupp.cooee.cli.commands
 
+import com.baulsupp.cooee.cli.util.ClientException
+import com.baulsupp.cooee.cli.Main
+import com.baulsupp.cooee.cli.util.execute
+import com.baulsupp.cooee.cli.util.request
 import com.baulsupp.cooee.p.CommandRequest
 import com.baulsupp.cooee.p.CommandResponse
 import com.baulsupp.cooee.p.CommandStatus
@@ -22,7 +26,8 @@ suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String
     if (imageUrl != null) {
       imageResponse = async {
         try {
-          client.execute(request(imageUrl, tokenSet = TokenValue(Oauth2Token("pk.eyJ1IjoieXNjaGlta2UiLCJhIjoiY2tlb3E5MWIyMWp4eDJ2azdraWg5cHkxYyJ9.UHmWRzY_VE7gqIjCwIAmNA"))))
+          client.execute(
+            request(imageUrl, tokenSet = TokenValue(Oauth2Token("pk.eyJ1IjoieXNjaGlta2UiLCJhIjoiY2tlb3E5MWIyMWp4eDJ2azdraWg5cHkxYyJ9.UHmWRzY_VE7gqIjCwIAmNA"))))
         } catch (ce: ClientException) {
           when (ce.code) {
             404 -> throw UsageException("image not found: $imageUrl")

@@ -1,5 +1,6 @@
-package com.baulsupp.cooee.cli
+package com.baulsupp.cooee.cli.commands
 
+import com.baulsupp.cooee.cli.Main
 import com.baulsupp.cooee.p.TodoRequest
 import com.baulsupp.cooee.p.TodoResponse
 import kotlinx.coroutines.coroutineScope

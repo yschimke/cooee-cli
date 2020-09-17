@@ -1,5 +1,6 @@
-package com.baulsupp.cooee.cli
+package com.baulsupp.cooee.cli.commands
 
+import com.baulsupp.cooee.cli.util.moshi
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.CompositeByteBuf
@@ -28,7 +29,7 @@ suspend inline fun <reified Request, reified Response> RSocket.requestResponse(r
 
   val readText = responsePayload.data.readText()
   val responseAdapter = moshi.adapter(Response::class.java)
-  return responseAdapter.fromJson(readText).also { println(it) } ?: throw IllegalStateException("Null response")
+  return responseAdapter.fromJson(readText) ?: throw IllegalStateException("Null response")
 }
 
 inline fun <reified Request, reified Response> RSocket.requestStream(route: String, request: Request): Flow<Response> {

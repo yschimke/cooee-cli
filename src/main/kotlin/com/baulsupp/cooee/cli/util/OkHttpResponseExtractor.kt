@@ -1,4 +1,4 @@
-package com.baulsupp.cooee.cli
+package com.baulsupp.cooee.cli.util
 
 import com.baulsupp.oksocial.output.ResponseExtractor
 import okhttp3.Response

@@ -1,7 +1,16 @@
 package com.baulsupp.cooee.cli
 
-import com.baulsupp.cooee.cli.LoggingUtil.Companion.configureLogging
+import com.baulsupp.cooee.cli.util.LoggingUtil.Companion.configureLogging
 import com.baulsupp.cooee.cli.auth.CooeeServiceDefinition
+import com.baulsupp.cooee.cli.commands.Shell
+import com.baulsupp.cooee.cli.commands.cooeeCommand
+import com.baulsupp.cooee.cli.commands.login
+import com.baulsupp.cooee.cli.commands.showCompletions
+import com.baulsupp.cooee.cli.commands.showTodos
+import com.baulsupp.cooee.cli.prefs.Preferences
+import com.baulsupp.cooee.cli.util.OkHttpResponseExtractor
+import com.baulsupp.cooee.cli.util.edit
+import com.baulsupp.cooee.cli.util.moshi
 import com.baulsupp.cooee.p.LogRequest
 import com.baulsupp.cooee.p.TokenRequest
 import com.baulsupp.cooee.p.TokenResponse
@@ -18,7 +27,6 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.features.websocket.WebSockets
 import io.ktor.utils.io.core.ByteReadPacket
 import io.ktor.utils.io.core.readBytes
-import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufAllocator.DEFAULT
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.CompositeByteBuf
@@ -36,10 +44,7 @@ import io.rsocket.kotlin.payload.PayloadMimeType
 import io.rsocket.metadata.AuthMetadataCodec
 import io.rsocket.metadata.CompositeMetadata
 import io.rsocket.metadata.CompositeMetadataCodec
-import io.rsocket.metadata.RoutingMetadata
 import io.rsocket.metadata.TaggingMetadata
-import io.rsocket.metadata.TaggingMetadataCodec
-import io.rsocket.metadata.TaggingMetadataCodec.createTaggingContent
 import io.rsocket.metadata.WellKnownMimeType
 import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
@@ -205,7 +210,7 @@ class Main : Runnable {
 
               if (route == "token") {
                 // TokenRequest
-                val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())
+                val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())!!
                 val response = tokenResponse(request)
                 Payload(moshi.adapter(TokenResponse::class.java).toJson(response))
               } else {
@@ -257,8 +262,8 @@ class Main : Runnable {
     return null
   }
 
-  suspend fun tokenResponse(request: TokenRequest?): TokenResponse? {
-    val serviceName = request!!.service ?: return null
+  suspend fun tokenResponse(request: TokenRequest): TokenResponse? {
+    val serviceName = request!!.service
 
     val service = services.find { it.name() == serviceName }!!
     val tokenString = service.getTokenString(request)

@@ -1,5 +1,8 @@
-package com.baulsupp.cooee.cli
+package com.baulsupp.cooee.cli.repl
 
+import com.baulsupp.cooee.cli.Main
+import com.baulsupp.cooee.cli.commands.completeCommand
+import com.baulsupp.cooee.cli.commands.cooeeCommand
 import kotlinx.coroutines.runBlocking
 import org.fusesource.jansi.AnsiConsole
 import org.jline.reader.Candidate
