@@ -1,10 +1,10 @@
 package com.baulsupp.cooee.cli
 
+import a.tokenResponse
 import com.baulsupp.cooee.cli.util.LoggingUtil.Companion.configureLogging
 import com.baulsupp.cooee.cli.auth.CooeeServiceDefinition
 import com.baulsupp.cooee.cli.commands.Shell
 import com.baulsupp.cooee.cli.commands.cooeeCommand
-import com.baulsupp.cooee.cli.commands.login
 import com.baulsupp.cooee.cli.commands.showCompletions
 import com.baulsupp.cooee.cli.commands.showTodos
 import com.baulsupp.cooee.cli.prefs.Preferences
@@ -14,6 +14,7 @@ import com.baulsupp.cooee.cli.util.moshi
 import com.baulsupp.cooee.p.LogRequest
 import com.baulsupp.cooee.p.TokenRequest
 import com.baulsupp.cooee.p.TokenResponse
+import com.baulsupp.cooee.p.TokenUpdate
 import com.baulsupp.oksocial.output.ConsoleHandler
 import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
@@ -84,9 +85,6 @@ class Main : Runnable {
   @Option(names = ["--open"], description = ["Open External Links"])
   var open: Boolean = false
 
-  @Option(names = ["--login"], description = ["Login to www.coo.ee"])
-  var login: Boolean = false
-
   @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
   var arguments: MutableList<String> = ArrayList()
 
@@ -106,7 +104,6 @@ class Main : Runnable {
 
   suspend fun runCommand(): Int {
     when {
-      login -> login()
       complete != null -> completeOption(complete!!)
       commandComplete -> showCompletions(arguments.joinToString(" "), Shell.ZSH)
       arguments.isEmpty() || arguments == listOf("") -> this@Main.showTodos()
@@ -262,23 +259,6 @@ class Main : Runnable {
     return null
   }
 
-  suspend fun tokenResponse(request: TokenRequest): TokenResponse? {
-    val serviceName = request!!.service
-
-    val service = services.find { it.name() == serviceName }!!
-    val tokenString = service.getTokenString(request)
-
-    return TokenResponse(token = tokenString)
-  }
-
-  suspend fun <T> AuthInterceptor<T>.getTokenString(
-    request: TokenRequest
-  ): String? {
-    val tokenSet = request.name?.let { TokenSet(it) } ?: DefaultToken
-    val token = credentialsStore.get(serviceDefinition, tokenSet) ?: return null
-    return serviceDefinition.formatCredentialsString(token)
-  }
-
   private fun versionString(): String {
     return this.javaClass.`package`.implementationVersion ?: "dev"
   }
@@ -292,7 +272,6 @@ class Main : Runnable {
 
       try {
         runCommand()
-        System.exit(-1)
       } catch (ue: UsageException) {
         outputHandler.showError(ue.message)
       } catch (ioe: IOException) {
@@ -301,6 +280,7 @@ class Main : Runnable {
       } finally {
         close()
       }
+      System.exit(-1)
     }
   }
 

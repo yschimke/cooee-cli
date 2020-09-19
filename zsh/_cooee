@@ -19,7 +19,6 @@ _cooee() {
   _arguments -C -S \
     --debug'[Debug]' \
     --open'[Open Extra Links]' \
-    --login'[Login to www.coo.ee]' \
     --command-complete='[Command completion]' \
     '*: :_cooee_complete' \
     && ret=0

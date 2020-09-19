@@ -41,6 +41,13 @@ class CompletionSuggestion(
   )
   @JvmField
   val command: CommandSuggestion? = null,
+  @field:WireField(
+    tag = 4,
+    adapter = "com.squareup.wire.ProtoAdapter#STRING",
+    label = WireField.Label.OMIT_IDENTITY
+  )
+  @JvmField
+  val provider: String = "",
   unknownFields: ByteString = ByteString.EMPTY
 ) : Message<CompletionSuggestion, CompletionSuggestion.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -48,6 +55,7 @@ class CompletionSuggestion(
     builder.word = word
     builder.line = line
     builder.command = command
+    builder.provider = provider
     builder.addUnknownFields(unknownFields)
     return builder
   }
@@ -59,6 +67,7 @@ class CompletionSuggestion(
     if (word != other.word) return false
     if (line != other.line) return false
     if (command != other.command) return false
+    if (provider != other.provider) return false
     return true
   }
 
@@ -69,6 +78,7 @@ class CompletionSuggestion(
       result = result * 37 + word.hashCode()
       result = result * 37 + line.hashCode()
       result = result * 37 + command.hashCode()
+      result = result * 37 + provider.hashCode()
       super.hashCode = result
     }
     return result
@@ -79,6 +89,7 @@ class CompletionSuggestion(
     result += """word=${sanitize(word)}"""
     result += """line=${sanitize(line)}"""
     if (command != null) result += """command=$command"""
+    result += """provider=${sanitize(provider)}"""
     return result.joinToString(prefix = "CompletionSuggestion{", separator = ", ", postfix = "}")
   }
 
@@ -86,8 +97,9 @@ class CompletionSuggestion(
     word: String = this.word,
     line: String = this.line,
     command: CommandSuggestion? = this.command,
+    provider: String = this.provider,
     unknownFields: ByteString = this.unknownFields
-  ): CompletionSuggestion = CompletionSuggestion(word, line, command, unknownFields)
+  ): CompletionSuggestion = CompletionSuggestion(word, line, command, provider, unknownFields)
 
   class Builder : Message.Builder<CompletionSuggestion, Builder>() {
     @JvmField
@@ -98,6 +110,9 @@ class CompletionSuggestion(
 
     @JvmField
     var command: CommandSuggestion? = null
+
+    @JvmField
+    var provider: String = ""
 
     fun word(word: String): Builder {
       this.word = word
@@ -114,10 +129,16 @@ class CompletionSuggestion(
       return this
     }
 
+    fun provider(provider: String): Builder {
+      this.provider = provider
+      return this
+    }
+
     override fun build(): CompletionSuggestion = CompletionSuggestion(
       word = word,
       line = line,
       command = command,
+      provider = provider,
       unknownFields = buildUnknownFields()
     )
   }
@@ -137,6 +158,7 @@ class CompletionSuggestion(
         if (value.line != "") size += ProtoAdapter.STRING.encodedSizeWithTag(2, value.line)
         if (value.command != null) size += CommandSuggestion.ADAPTER.encodedSizeWithTag(3,
             value.command)
+        if (value.provider != "") size += ProtoAdapter.STRING.encodedSizeWithTag(4, value.provider)
         return size
       }
 
@@ -144,6 +166,7 @@ class CompletionSuggestion(
         if (value.word != "") ProtoAdapter.STRING.encodeWithTag(writer, 1, value.word)
         if (value.line != "") ProtoAdapter.STRING.encodeWithTag(writer, 2, value.line)
         if (value.command != null) CommandSuggestion.ADAPTER.encodeWithTag(writer, 3, value.command)
+        if (value.provider != "") ProtoAdapter.STRING.encodeWithTag(writer, 4, value.provider)
         writer.writeBytes(value.unknownFields)
       }
 
@@ -151,11 +174,13 @@ class CompletionSuggestion(
         var word: String = ""
         var line: String = ""
         var command: CommandSuggestion? = null
+        var provider: String = ""
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
             1 -> word = ProtoAdapter.STRING.decode(reader)
             2 -> line = ProtoAdapter.STRING.decode(reader)
             3 -> command = CommandSuggestion.ADAPTER.decode(reader)
+            4 -> provider = ProtoAdapter.STRING.decode(reader)
             else -> reader.readUnknownField(tag)
           }
         }
@@ -163,6 +188,7 @@ class CompletionSuggestion(
           word = word,
           line = line,
           command = command,
+          provider = provider,
           unknownFields = unknownFields
         )
       }

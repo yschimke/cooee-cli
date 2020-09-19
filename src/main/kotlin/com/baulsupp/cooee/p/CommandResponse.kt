@@ -25,7 +25,7 @@ class CommandResponse(
     label = WireField.Label.OMIT_IDENTITY
   )
   @JvmField
-  val location: String? = null,
+  val url: String? = null,
   @field:WireField(
     tag = 2,
     adapter = "com.squareup.wire.ProtoAdapter#STRING_VALUE",
@@ -52,7 +52,7 @@ class CommandResponse(
 ) : Message<CommandResponse, CommandResponse.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
     val builder = Builder()
-    builder.location = location
+    builder.url = url
     builder.message = message
     builder.image_url = image_url
     builder.status = status
@@ -64,7 +64,7 @@ class CommandResponse(
     if (other === this) return true
     if (other !is CommandResponse) return false
     if (unknownFields != other.unknownFields) return false
-    if (location != other.location) return false
+    if (url != other.url) return false
     if (message != other.message) return false
     if (image_url != other.image_url) return false
     if (status != other.status) return false
@@ -75,7 +75,7 @@ class CommandResponse(
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
-      result = result * 37 + location.hashCode()
+      result = result * 37 + url.hashCode()
       result = result * 37 + message.hashCode()
       result = result * 37 + image_url.hashCode()
       result = result * 37 + status.hashCode()
@@ -86,7 +86,7 @@ class CommandResponse(
 
   override fun toString(): String {
     val result = mutableListOf<String>()
-    if (location != null) result += """location=$location"""
+    if (url != null) result += """url=$url"""
     if (message != null) result += """message=$message"""
     if (image_url != null) result += """image_url=$image_url"""
     result += """status=$status"""
@@ -94,16 +94,16 @@ class CommandResponse(
   }
 
   fun copy(
-    location: String? = this.location,
+    url: String? = this.url,
     message: String? = this.message,
     image_url: ImageUrl? = this.image_url,
     status: CommandStatus = this.status,
     unknownFields: ByteString = this.unknownFields
-  ): CommandResponse = CommandResponse(location, message, image_url, status, unknownFields)
+  ): CommandResponse = CommandResponse(url, message, image_url, status, unknownFields)
 
   class Builder : Message.Builder<CommandResponse, Builder>() {
     @JvmField
-    var location: String? = null
+    var url: String? = null
 
     @JvmField
     var message: String? = null
@@ -114,8 +114,8 @@ class CommandResponse(
     @JvmField
     var status: CommandStatus = CommandStatus.UNDEFINED
 
-    fun location(location: String?): Builder {
-      this.location = location
+    fun url(url: String?): Builder {
+      this.url = url
       return this
     }
 
@@ -135,7 +135,7 @@ class CommandResponse(
     }
 
     override fun build(): CommandResponse = CommandResponse(
-      location = location,
+      url = url,
       message = message,
       image_url = image_url,
       status = status,
@@ -154,8 +154,7 @@ class CommandResponse(
     ) {
       override fun encodedSize(value: CommandResponse): Int {
         var size = value.unknownFields.size
-        if (value.location != null) size += ProtoAdapter.STRING_VALUE.encodedSizeWithTag(1,
-            value.location)
+        if (value.url != null) size += ProtoAdapter.STRING_VALUE.encodedSizeWithTag(1, value.url)
         if (value.message != null) size += ProtoAdapter.STRING_VALUE.encodedSizeWithTag(2,
             value.message)
         if (value.image_url != null) size += ImageUrl.ADAPTER.encodedSizeWithTag(3, value.image_url)
@@ -165,8 +164,7 @@ class CommandResponse(
       }
 
       override fun encode(writer: ProtoWriter, value: CommandResponse) {
-        if (value.location != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 1,
-            value.location)
+        if (value.url != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 1, value.url)
         if (value.message != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 2, value.message)
         if (value.image_url != null) ImageUrl.ADAPTER.encodeWithTag(writer, 3, value.image_url)
         if (value.status != CommandStatus.UNDEFINED) CommandStatus.ADAPTER.encodeWithTag(writer, 4,
@@ -175,13 +173,13 @@ class CommandResponse(
       }
 
       override fun decode(reader: ProtoReader): CommandResponse {
-        var location: String? = null
+        var url: String? = null
         var message: String? = null
         var image_url: ImageUrl? = null
         var status: CommandStatus = CommandStatus.UNDEFINED
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
-            1 -> location = ProtoAdapter.STRING_VALUE.decode(reader)
+            1 -> url = ProtoAdapter.STRING_VALUE.decode(reader)
             2 -> message = ProtoAdapter.STRING_VALUE.decode(reader)
             3 -> image_url = ImageUrl.ADAPTER.decode(reader)
             4 -> try {
@@ -193,7 +191,7 @@ class CommandResponse(
           }
         }
         return CommandResponse(
-          location = location,
+          url = url,
           message = message,
           image_url = image_url,
           status = status,
@@ -202,7 +200,7 @@ class CommandResponse(
       }
 
       override fun redact(value: CommandResponse): CommandResponse = value.copy(
-        location = value.location?.let(ProtoAdapter.STRING_VALUE::redact),
+        url = value.url?.let(ProtoAdapter.STRING_VALUE::redact),
         message = value.message?.let(ProtoAdapter.STRING_VALUE::redact),
         image_url = value.image_url?.let(ImageUrl.ADAPTER::redact),
         unknownFields = ByteString.EMPTY

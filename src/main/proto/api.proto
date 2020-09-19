@@ -16,14 +16,22 @@ enum CommandStatus {
   REDIRECT = 3;
   REQUEST_ERROR = 4;
   SERVER_ERROR = 5;
+  STREAM = 6;
+}
+
+enum ResponseType {
+  DEFAULT_RESPONSE = 0;
+  REQUEST_RESPONSE = 1;
+  STREAM_RESPONSE = 2;
 }
 
 message CommandRequest {
   repeated string parsed_command = 1;
+  ResponseType response_type = 2;
 }
 
 message CommandResponse {
-  google.protobuf.StringValue location = 1;
+  google.protobuf.StringValue url = 1;
   google.protobuf.StringValue message = 2;
   ImageUrl image_url = 3;
   CommandStatus status = 4;
@@ -62,6 +70,7 @@ message CompletionSuggestion {
   string word = 1;
   string line = 2;
   CommandSuggestion command = 3;
+  string provider = 4;
 }
 
 message CompletionRequest {
@@ -82,11 +91,19 @@ message TodoResponse {
 
 message TokenRequest {
   string service = 1;
-  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue token_set = 2;
+  google.protobuf.StringValue login_url = 3;
 }
 
 message TokenResponse {
-  google.protobuf.StringValue token = 1;
+  TokenUpdate token = 1;
+  bool login_attempted = 2;
+}
+
+message TokenUpdate {
+  string service = 1;
+  google.protobuf.StringValue token_set = 2;
+  google.protobuf.StringValue token = 3;
 }
 
 enum LogSeverity {

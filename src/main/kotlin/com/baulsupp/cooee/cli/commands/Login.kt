@@ -1,35 +1,34 @@
-package com.baulsupp.cooee.cli.commands
+package a
 
 import com.baulsupp.cooee.cli.Main
-import com.baulsupp.cooee.cli.SimpleWebServer
-import com.baulsupp.cooee.cli.auth.CooeeServiceDefinition
+import com.baulsupp.cooee.p.TokenRequest
+import com.baulsupp.cooee.p.TokenResponse
+import com.baulsupp.cooee.p.TokenUpdate
+import com.baulsupp.okurl.authenticator.AuthInterceptor
 import com.baulsupp.okurl.credentials.DefaultToken
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.Jwts
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import com.baulsupp.okurl.credentials.TokenSet
 
-suspend fun Main.login() {
-  coroutineScope {
-    launch(start = CoroutineStart.ATOMIC) {
-      SimpleWebServer.forCode().use { s ->
-        outputHandler.openLink(
-          "https://www.coo.ee/user/jwt?callback=http://localhost:3000/callback")
-
-        val token = s.waitForCode()
-
-        val jwt = parseClaims(token)
-        outputHandler.info("JWT: $jwt")
-
-        credentialsStore.set(CooeeServiceDefinition, DefaultToken.name, token)
-      }
-    }
+suspend fun Main.tokenResponse(request: TokenRequest): TokenResponse? {
+  suspend fun <T> AuthInterceptor<T>.getTokenString(
+    request: TokenRequest
+  ): String? {
+    val tokenSet = request.token_set?.let { TokenSet(it) } ?: DefaultToken
+    val token = credentialsStore.get(serviceDefinition, tokenSet) ?: return null
+    return serviceDefinition.formatCredentialsString(token)
   }
-}
 
-private fun parseClaims(token: String): Claims? {
-  // TODO verify using public signing key
-  val unsignedToken = token.substring(0, token.lastIndexOf('.') + 1)
-  return Jwts.parserBuilder().build().parseClaimsJwt(unsignedToken).body
+  val serviceName = request.service
+
+  val service = services.find { it.name() == serviceName }
+  val tokenString = service?.getTokenString(request)
+
+  if (tokenString == null && request.login_url != null) {
+    outputHandler.showError("Authenticating externally")
+
+    outputHandler.openLink(request.login_url)
+
+    return TokenResponse(login_attempted = true)
+  }
+
+  return TokenResponse(token = tokenString?.let { TokenUpdate(service = serviceName, token = tokenString) })
 }

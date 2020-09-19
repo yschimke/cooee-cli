@@ -18,11 +18,20 @@ import kotlin.Int
 import kotlin.Long
 import kotlin.String
 import kotlin.collections.List
+import kotlin.hashCode
 import kotlin.jvm.JvmField
 import okio.ByteString
 
 class CommandRequest(
   parsed_command: List<String> = emptyList(),
+  @field:WireField(
+    tag = 2,
+    adapter = "com.baulsupp.cooee.p.ResponseType#ADAPTER",
+    label = WireField.Label.OMIT_IDENTITY,
+    jsonName = "responseType"
+  )
+  @JvmField
+  val response_type: ResponseType = ResponseType.DEFAULT_RESPONSE,
   unknownFields: ByteString = ByteString.EMPTY
 ) : Message<CommandRequest, CommandRequest.Builder>(ADAPTER, unknownFields) {
   @field:WireField(
@@ -37,6 +46,7 @@ class CommandRequest(
   override fun newBuilder(): Builder {
     val builder = Builder()
     builder.parsed_command = parsed_command
+    builder.response_type = response_type
     builder.addUnknownFields(unknownFields)
     return builder
   }
@@ -46,6 +56,7 @@ class CommandRequest(
     if (other !is CommandRequest) return false
     if (unknownFields != other.unknownFields) return false
     if (parsed_command != other.parsed_command) return false
+    if (response_type != other.response_type) return false
     return true
   }
 
@@ -54,6 +65,7 @@ class CommandRequest(
     if (result == 0) {
       result = unknownFields.hashCode()
       result = result * 37 + parsed_command.hashCode()
+      result = result * 37 + response_type.hashCode()
       super.hashCode = result
     }
     return result
@@ -62,15 +74,22 @@ class CommandRequest(
   override fun toString(): String {
     val result = mutableListOf<String>()
     if (parsed_command.isNotEmpty()) result += """parsed_command=${sanitize(parsed_command)}"""
+    result += """response_type=$response_type"""
     return result.joinToString(prefix = "CommandRequest{", separator = ", ", postfix = "}")
   }
 
-  fun copy(parsed_command: List<String> = this.parsed_command, unknownFields: ByteString =
-      this.unknownFields): CommandRequest = CommandRequest(parsed_command, unknownFields)
+  fun copy(
+    parsed_command: List<String> = this.parsed_command,
+    response_type: ResponseType = this.response_type,
+    unknownFields: ByteString = this.unknownFields
+  ): CommandRequest = CommandRequest(parsed_command, response_type, unknownFields)
 
   class Builder : Message.Builder<CommandRequest, Builder>() {
     @JvmField
     var parsed_command: List<String> = emptyList()
+
+    @JvmField
+    var response_type: ResponseType = ResponseType.DEFAULT_RESPONSE
 
     fun parsed_command(parsed_command: List<String>): Builder {
       checkElementsNotNull(parsed_command)
@@ -78,8 +97,14 @@ class CommandRequest(
       return this
     }
 
+    fun response_type(response_type: ResponseType): Builder {
+      this.response_type = response_type
+      return this
+    }
+
     override fun build(): CommandRequest = CommandRequest(
       parsed_command = parsed_command,
+      response_type = response_type,
       unknownFields = buildUnknownFields()
     )
   }
@@ -96,24 +121,35 @@ class CommandRequest(
       override fun encodedSize(value: CommandRequest): Int {
         var size = value.unknownFields.size
         size += ProtoAdapter.STRING.asRepeated().encodedSizeWithTag(1, value.parsed_command)
+        if (value.response_type != ResponseType.DEFAULT_RESPONSE) size +=
+            ResponseType.ADAPTER.encodedSizeWithTag(2, value.response_type)
         return size
       }
 
       override fun encode(writer: ProtoWriter, value: CommandRequest) {
         ProtoAdapter.STRING.asRepeated().encodeWithTag(writer, 1, value.parsed_command)
+        if (value.response_type != ResponseType.DEFAULT_RESPONSE)
+            ResponseType.ADAPTER.encodeWithTag(writer, 2, value.response_type)
         writer.writeBytes(value.unknownFields)
       }
 
       override fun decode(reader: ProtoReader): CommandRequest {
         val parsed_command = mutableListOf<String>()
+        var response_type: ResponseType = ResponseType.DEFAULT_RESPONSE
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
             1 -> parsed_command.add(ProtoAdapter.STRING.decode(reader))
+            2 -> try {
+              response_type = ResponseType.ADAPTER.decode(reader)
+            } catch (e: ProtoAdapter.EnumConstantNotFoundException) {
+              reader.addUnknownField(tag, FieldEncoding.VARINT, e.value.toLong())
+            }
             else -> reader.readUnknownField(tag)
           }
         }
         return CommandRequest(
           parsed_command = parsed_command,
+          response_type = response_type,
           unknownFields = unknownFields
         )
       }

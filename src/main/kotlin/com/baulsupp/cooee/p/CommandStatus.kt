@@ -23,7 +23,9 @@ enum class CommandStatus(
 
   REQUEST_ERROR(4),
 
-  SERVER_ERROR(5);
+  SERVER_ERROR(5),
+
+  STREAM(6);
 
   companion object {
     @JvmField
@@ -43,6 +45,7 @@ enum class CommandStatus(
       3 -> REDIRECT
       4 -> REQUEST_ERROR
       5 -> SERVER_ERROR
+      6 -> STREAM
       else -> null
     }
   }

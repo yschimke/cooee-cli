@@ -21,16 +21,25 @@ import okio.ByteString
 class TokenResponse(
   @field:WireField(
     tag = 1,
-    adapter = "com.squareup.wire.ProtoAdapter#STRING_VALUE",
+    adapter = "com.baulsupp.cooee.p.TokenUpdate#ADAPTER",
     label = WireField.Label.OMIT_IDENTITY
   )
   @JvmField
-  val token: String? = null,
+  val token: TokenUpdate? = null,
+  @field:WireField(
+    tag = 2,
+    adapter = "com.squareup.wire.ProtoAdapter#BOOL",
+    label = WireField.Label.OMIT_IDENTITY,
+    jsonName = "loginAttempted"
+  )
+  @JvmField
+  val login_attempted: Boolean = false,
   unknownFields: ByteString = ByteString.EMPTY
 ) : Message<TokenResponse, TokenResponse.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
     val builder = Builder()
     builder.token = token
+    builder.login_attempted = login_attempted
     builder.addUnknownFields(unknownFields)
     return builder
   }
@@ -40,6 +49,7 @@ class TokenResponse(
     if (other !is TokenResponse) return false
     if (unknownFields != other.unknownFields) return false
     if (token != other.token) return false
+    if (login_attempted != other.login_attempted) return false
     return true
   }
 
@@ -48,6 +58,7 @@ class TokenResponse(
     if (result == 0) {
       result = unknownFields.hashCode()
       result = result * 37 + token.hashCode()
+      result = result * 37 + login_attempted.hashCode()
       super.hashCode = result
     }
     return result
@@ -56,23 +67,36 @@ class TokenResponse(
   override fun toString(): String {
     val result = mutableListOf<String>()
     if (token != null) result += """token=$token"""
+    result += """login_attempted=$login_attempted"""
     return result.joinToString(prefix = "TokenResponse{", separator = ", ", postfix = "}")
   }
 
-  fun copy(token: String? = this.token, unknownFields: ByteString = this.unknownFields):
-      TokenResponse = TokenResponse(token, unknownFields)
+  fun copy(
+    token: TokenUpdate? = this.token,
+    login_attempted: Boolean = this.login_attempted,
+    unknownFields: ByteString = this.unknownFields
+  ): TokenResponse = TokenResponse(token, login_attempted, unknownFields)
 
   class Builder : Message.Builder<TokenResponse, Builder>() {
     @JvmField
-    var token: String? = null
+    var token: TokenUpdate? = null
 
-    fun token(token: String?): Builder {
+    @JvmField
+    var login_attempted: Boolean = false
+
+    fun token(token: TokenUpdate?): Builder {
       this.token = token
+      return this
+    }
+
+    fun login_attempted(login_attempted: Boolean): Builder {
+      this.login_attempted = login_attempted
       return this
     }
 
     override fun build(): TokenResponse = TokenResponse(
       token = token,
+      login_attempted = login_attempted,
       unknownFields = buildUnknownFields()
     )
   }
@@ -88,32 +112,38 @@ class TokenResponse(
     ) {
       override fun encodedSize(value: TokenResponse): Int {
         var size = value.unknownFields.size
-        if (value.token != null) size += ProtoAdapter.STRING_VALUE.encodedSizeWithTag(1,
-            value.token)
+        if (value.token != null) size += TokenUpdate.ADAPTER.encodedSizeWithTag(1, value.token)
+        if (value.login_attempted != false) size += ProtoAdapter.BOOL.encodedSizeWithTag(2,
+            value.login_attempted)
         return size
       }
 
       override fun encode(writer: ProtoWriter, value: TokenResponse) {
-        if (value.token != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 1, value.token)
+        if (value.token != null) TokenUpdate.ADAPTER.encodeWithTag(writer, 1, value.token)
+        if (value.login_attempted != false) ProtoAdapter.BOOL.encodeWithTag(writer, 2,
+            value.login_attempted)
         writer.writeBytes(value.unknownFields)
       }
 
       override fun decode(reader: ProtoReader): TokenResponse {
-        var token: String? = null
+        var token: TokenUpdate? = null
+        var login_attempted: Boolean = false
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
-            1 -> token = ProtoAdapter.STRING_VALUE.decode(reader)
+            1 -> token = TokenUpdate.ADAPTER.decode(reader)
+            2 -> login_attempted = ProtoAdapter.BOOL.decode(reader)
             else -> reader.readUnknownField(tag)
           }
         }
         return TokenResponse(
           token = token,
+          login_attempted = login_attempted,
           unknownFields = unknownFields
         )
       }
 
       override fun redact(value: TokenResponse): TokenResponse = value.copy(
-        token = value.token?.let(ProtoAdapter.STRING_VALUE::redact),
+        token = value.token?.let(TokenUpdate.ADAPTER::redact),
         unknownFields = ByteString.EMPTY
       )
     }
