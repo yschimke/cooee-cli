@@ -22,8 +22,6 @@ suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String
   val resultFlow = runCommand(runArguments)
 
   resultFlow.collect { result ->
-    println(result)
-
     val imageUrl = result.image_url?.url
     if (result.url != null || result.message != null || imageUrl != null) {
       var imageResponse: Deferred<Response?>? = null
