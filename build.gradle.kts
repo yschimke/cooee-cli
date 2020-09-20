@@ -128,3 +128,23 @@ dependencies {
 
   testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.2")
 }
+
+if (properties.containsKey("graalbuild")) {
+  val nativeImage = tasks["nativeImage"]
+
+  distributions {
+    val graal = create("graal") {
+      contents {
+        from("${rootProject.projectDir}") {
+          include("README.md", "LICENSE")
+        }
+        from("${rootProject.projectDir}/zsh") {
+          into("zsh")
+        }
+        into("bin") {
+          from(nativeImage)
+        }
+      }
+    }
+  }
+}
