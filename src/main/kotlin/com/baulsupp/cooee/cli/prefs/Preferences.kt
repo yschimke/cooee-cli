@@ -11,7 +11,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 data class Preferences(
-  val api: String = "https://stream.coo.ee",
+  val api: String = "wss://stream.coo.ee/rsocket",
   val web: String = "https://www.coo.ee",
   val descriptionLength: Int = 20
 ) {
