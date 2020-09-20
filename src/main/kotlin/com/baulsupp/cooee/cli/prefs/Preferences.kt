@@ -11,7 +11,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 data class Preferences(
-  val api: String = "https://api.coo.ee",
+  val api: String = "https://stream.coo.ee",
   val web: String = "https://www.coo.ee",
   val descriptionLength: Int = 20
 ) {
