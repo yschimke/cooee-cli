@@ -85,6 +85,9 @@ class Main : Runnable {
   @Option(names = ["--open"], description = ["Open External Links"])
   var open: Boolean = false
 
+  @Option(names = ["--local"], description = ["Local Server"])
+  var local: Boolean = false
+
   @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
   var arguments: MutableList<String> = ArrayList()
 
@@ -144,7 +147,7 @@ class Main : Runnable {
       client = clientBuilder.build()
     }
 
-    rsocketClient = buildClient(Preferences.local.api)
+    rsocketClient = buildClient(if (local) "ws://localhost:8080/rsocket" else Preferences.local.api)
   }
 
   private fun createClientBuilder(): OkHttpClient.Builder {
