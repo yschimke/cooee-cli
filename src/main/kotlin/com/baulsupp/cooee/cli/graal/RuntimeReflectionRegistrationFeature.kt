@@ -1,5 +1,7 @@
 package com.baulsupp.cooee.cli.graal
 
+import com.baulsupp.okurl.moshi.Rfc3339InstantJsonAdapter
+import com.baulsupp.okurl.services.mapbox.model.MapboxLatLongAdapter
 import com.oracle.svm.core.annotate.AutomaticFeature
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
@@ -36,6 +38,10 @@ internal class RuntimeReflectionRegistrationFeature : Feature {
       e.printStackTrace()
       throw e
     }
+
+    // TODO move to block above
+    registerAnnotatedMoshiAdapter(MapboxLatLongAdapter::class.java)
+    registerAnnotatedMoshiAdapter(Rfc3339InstantJsonAdapter::class.java)
   }
 
   private fun registerMoshiAdapter(java: Class<*>) {
@@ -55,6 +61,15 @@ internal class RuntimeReflectionRegistrationFeature : Feature {
       RuntimeReflection.register(java.getConstructor(Moshi::class.java))
     } catch (nsme: NoSuchMethodException) {
       // expected
+    }
+  }
+
+  private fun registerAnnotatedMoshiAdapter(java: Class<*>) {
+    RuntimeReflection.register(java)
+    java.declaredMethods.forEach {
+      println(it)
+
+      RuntimeReflection.register(it)
     }
   }
 
