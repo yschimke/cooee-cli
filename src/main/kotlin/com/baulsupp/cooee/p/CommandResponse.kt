@@ -48,6 +48,13 @@ class CommandResponse(
   )
   @JvmField
   val status: CommandStatus = CommandStatus.UNDEFINED,
+  @field:WireField(
+    tag = 5,
+    adapter = "com.baulsupp.cooee.p.Table#ADAPTER",
+    label = WireField.Label.OMIT_IDENTITY
+  )
+  @JvmField
+  val table: Table? = null,
   unknownFields: ByteString = ByteString.EMPTY
 ) : Message<CommandResponse, CommandResponse.Builder>(ADAPTER, unknownFields) {
   override fun newBuilder(): Builder {
@@ -56,6 +63,7 @@ class CommandResponse(
     builder.message = message
     builder.image_url = image_url
     builder.status = status
+    builder.table = table
     builder.addUnknownFields(unknownFields)
     return builder
   }
@@ -68,6 +76,7 @@ class CommandResponse(
     if (message != other.message) return false
     if (image_url != other.image_url) return false
     if (status != other.status) return false
+    if (table != other.table) return false
     return true
   }
 
@@ -79,6 +88,7 @@ class CommandResponse(
       result = result * 37 + message.hashCode()
       result = result * 37 + image_url.hashCode()
       result = result * 37 + status.hashCode()
+      result = result * 37 + table.hashCode()
       super.hashCode = result
     }
     return result
@@ -90,6 +100,7 @@ class CommandResponse(
     if (message != null) result += """message=$message"""
     if (image_url != null) result += """image_url=$image_url"""
     result += """status=$status"""
+    if (table != null) result += """table=$table"""
     return result.joinToString(prefix = "CommandResponse{", separator = ", ", postfix = "}")
   }
 
@@ -98,8 +109,9 @@ class CommandResponse(
     message: String? = this.message,
     image_url: ImageUrl? = this.image_url,
     status: CommandStatus = this.status,
+    table: Table? = this.table,
     unknownFields: ByteString = this.unknownFields
-  ): CommandResponse = CommandResponse(url, message, image_url, status, unknownFields)
+  ): CommandResponse = CommandResponse(url, message, image_url, status, table, unknownFields)
 
   class Builder : Message.Builder<CommandResponse, Builder>() {
     @JvmField
@@ -113,6 +125,9 @@ class CommandResponse(
 
     @JvmField
     var status: CommandStatus = CommandStatus.UNDEFINED
+
+    @JvmField
+    var table: Table? = null
 
     fun url(url: String?): Builder {
       this.url = url
@@ -134,11 +149,17 @@ class CommandResponse(
       return this
     }
 
+    fun table(table: Table?): Builder {
+      this.table = table
+      return this
+    }
+
     override fun build(): CommandResponse = CommandResponse(
       url = url,
       message = message,
       image_url = image_url,
       status = status,
+      table = table,
       unknownFields = buildUnknownFields()
     )
   }
@@ -160,6 +181,7 @@ class CommandResponse(
         if (value.image_url != null) size += ImageUrl.ADAPTER.encodedSizeWithTag(3, value.image_url)
         if (value.status != CommandStatus.UNDEFINED) size +=
             CommandStatus.ADAPTER.encodedSizeWithTag(4, value.status)
+        if (value.table != null) size += Table.ADAPTER.encodedSizeWithTag(5, value.table)
         return size
       }
 
@@ -169,6 +191,7 @@ class CommandResponse(
         if (value.image_url != null) ImageUrl.ADAPTER.encodeWithTag(writer, 3, value.image_url)
         if (value.status != CommandStatus.UNDEFINED) CommandStatus.ADAPTER.encodeWithTag(writer, 4,
             value.status)
+        if (value.table != null) Table.ADAPTER.encodeWithTag(writer, 5, value.table)
         writer.writeBytes(value.unknownFields)
       }
 
@@ -177,6 +200,7 @@ class CommandResponse(
         var message: String? = null
         var image_url: ImageUrl? = null
         var status: CommandStatus = CommandStatus.UNDEFINED
+        var table: Table? = null
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
             1 -> url = ProtoAdapter.STRING_VALUE.decode(reader)
@@ -187,6 +211,7 @@ class CommandResponse(
             } catch (e: ProtoAdapter.EnumConstantNotFoundException) {
               reader.addUnknownField(tag, FieldEncoding.VARINT, e.value.toLong())
             }
+            5 -> table = Table.ADAPTER.decode(reader)
             else -> reader.readUnknownField(tag)
           }
         }
@@ -195,6 +220,7 @@ class CommandResponse(
           message = message,
           image_url = image_url,
           status = status,
+          table = table,
           unknownFields = unknownFields
         )
       }
@@ -203,6 +229,7 @@ class CommandResponse(
         url = value.url?.let(ProtoAdapter.STRING_VALUE::redact),
         message = value.message?.let(ProtoAdapter.STRING_VALUE::redact),
         image_url = value.image_url?.let(ImageUrl.ADAPTER::redact),
+        table = value.table?.let(Table.ADAPTER::redact),
         unknownFields = ByteString.EMPTY
       )
     }

@@ -10,6 +10,8 @@ import com.baulsupp.cooee.p.CommandStatus
 import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.oauth2.Oauth2Token
 import com.baulsupp.okurl.credentials.TokenValue
+import com.jakewharton.picnic.TextAlignment
+import com.jakewharton.picnic.table
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -41,6 +43,26 @@ suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String
       }
       if (result.message != null) {
         outputHandler.info(result.message)
+      }
+      if (result.table != null) {
+        val columns = result.table.columns
+
+        val flipTable = table {
+          cellStyle {
+            border = false
+            alignment = TextAlignment.TopLeft
+            paddingRight = 1
+          }
+
+          header {
+            row(*columns.map { it.name }.toTypedArray())
+          }
+          columns.firstOrNull()?.values?.indices?.forEach { rowNum ->
+            row(*columns.map { it.values[rowNum] }.toTypedArray())
+          }
+        }
+
+        outputHandler.info(flipTable.toString())
       }
       if (result.url != null && (result.status == CommandStatus.REDIRECT || openExtraLinks)) {
         @Suppress("EXPERIMENTAL_API_USAGE")

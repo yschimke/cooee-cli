@@ -67,8 +67,6 @@ internal class RuntimeReflectionRegistrationFeature : Feature {
   private fun registerAnnotatedMoshiAdapter(java: Class<*>) {
     RuntimeReflection.register(java)
     java.declaredMethods.forEach {
-      println(it)
-
       RuntimeReflection.register(it)
     }
   }

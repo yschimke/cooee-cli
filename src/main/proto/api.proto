@@ -35,6 +35,7 @@ message CommandResponse {
   google.protobuf.StringValue message = 2;
   ImageUrl image_url = 3;
   CommandStatus status = 4;
+  Table table = 5;
 }
 
 enum SuggestionType {
@@ -109,4 +110,13 @@ enum LogSeverity {
 message LogRequest {
   string message = 1;
   LogSeverity severity = 2;
+}
+
+message TableColumn {
+  string name = 1;
+  repeated string values = 2;
+}
+
+message Table {
+  repeated TableColumn columns = 1;
 }

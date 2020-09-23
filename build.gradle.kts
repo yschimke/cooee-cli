@@ -93,6 +93,8 @@ dependencies {
   implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
   implementation("com.github.yschimke:okurl:2.22")
 
+  implementation("com.jakewharton.picnic:picnic:0.5.0")
+
   kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
   kapt("info.picocli:picocli-codegen:4.5.0")
   implementation("org.graalvm.nativeimage:svm:20.2.0") {
