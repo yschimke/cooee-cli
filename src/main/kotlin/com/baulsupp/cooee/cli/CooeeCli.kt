@@ -109,7 +109,6 @@ class Main : Runnable {
     when {
       complete != null -> completeOption(complete!!)
       commandComplete -> showCompletions(arguments.joinToString(" "), Shell.ZSH)
-      arguments.isEmpty() || arguments == listOf("") -> this@Main.showTodos()
       else -> this@Main.cooeeCommand(open, arguments)
     }
 

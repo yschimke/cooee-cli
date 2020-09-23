@@ -81,14 +81,6 @@ message CompletionResponse {
   repeated CompletionSuggestion completions = 1;
 }
 
-message TodoRequest {
-  google.protobuf.UInt32Value limit = 1;
-}
-
-message TodoResponse {
-  repeated CommandSuggestion todos = 1;
-}
-
 message TokenRequest {
   string service = 1;
   google.protobuf.StringValue token_set = 2;
