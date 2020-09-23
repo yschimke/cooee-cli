@@ -7,11 +7,10 @@ import com.baulsupp.cooee.cli.util.request
 import com.baulsupp.cooee.p.CommandRequest
 import com.baulsupp.cooee.p.CommandResponse
 import com.baulsupp.cooee.p.CommandStatus
+import com.baulsupp.cooee.p.Table
 import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.oauth2.Oauth2Token
 import com.baulsupp.okurl.credentials.TokenValue
-import com.jakewharton.picnic.TextAlignment
-import com.jakewharton.picnic.table
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -45,24 +44,7 @@ suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String
         outputHandler.info(result.message)
       }
       if (result.table != null) {
-        val columns = result.table.columns
-
-        val flipTable = table {
-          cellStyle {
-            border = false
-            alignment = TextAlignment.TopLeft
-            paddingRight = 1
-          }
-
-          header {
-            row(*columns.map { it.name }.toTypedArray())
-          }
-          columns.firstOrNull()?.values?.indices?.forEach { rowNum ->
-            row(*columns.map { it.values[rowNum] }.toTypedArray())
-          }
-        }
-
-        outputHandler.info(flipTable.toString())
+        outputHandler.info(tableToString(result.table))
       }
       if (result.url != null && (result.status == CommandStatus.REDIRECT || openExtraLinks)) {
         @Suppress("EXPERIMENTAL_API_USAGE")
@@ -82,6 +64,59 @@ suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String
 
   0
 }
+
+fun tableToString(table: Table): String {
+  val columns = table.columns
+  return buildString {
+    append(columns.map { it.name }.joinToString("\t"))
+
+    columns.firstOrNull()?.values?.indices?.forEach { rowNum ->
+      append("\n")
+      append(columns.map { it.values[rowNum] }.joinToString("\t"))
+    }
+  }
+//
+//
+//  val flipTable = table {
+//    cellStyle {
+//      border = false
+//      alignment = TextAlignment.TopLeft
+//      paddingRight = 1
+//    }
+//
+//    header {
+//      row(*columns.map { it.name }.toTypedArray())
+//    }
+//    columns.firstOrNull()?.values?.indices?.forEach { rowNum ->
+//      row(*columns.map { it.values[rowNum] }.toTypedArray())
+//    }
+//  }
+//
+//  val tableString = flipTable.toString()
+//  return tableString
+}
+
+//fun tableToString(table: Table): String {
+//  val columns = table.columns
+//
+//  val flipTable = table {
+//    cellStyle {
+//      border = false
+//      alignment = TextAlignment.TopLeft
+//      paddingRight = 1
+//    }
+//
+//    header {
+//      row(*columns.map { it.name }.toTypedArray())
+//    }
+//    columns.firstOrNull()?.values?.indices?.forEach { rowNum ->
+//      row(*columns.map { it.values[rowNum] }.toTypedArray())
+//    }
+//  }
+//
+//  val tableString = flipTable.toString()
+//  return tableString
+//}
 
 suspend fun Main.runCommand(runArguments: List<String>) =
   rsocketClient.requestStream<CommandRequest, CommandResponse>("runCommand", CommandRequest(parsed_command = runArguments))
