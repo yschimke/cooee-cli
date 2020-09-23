@@ -141,6 +141,9 @@ if (properties.containsKey("graalbuild")) {
         from("${rootProject.projectDir}/zsh") {
           into("zsh")
         }
+        from("${rootProject.projectDir}/bash") {
+          into("bash")
+        }
         into("bin") {
           from(nativeImage)
         }
