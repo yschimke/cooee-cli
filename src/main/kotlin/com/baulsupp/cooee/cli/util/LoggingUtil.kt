@@ -1,5 +1,6 @@
 package com.baulsupp.cooee.cli.util
 
+import org.slf4j.LoggerFactory
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.time.Instant
@@ -49,6 +50,7 @@ class LoggingUtil {
           activeLogger.level = Level.ALL
       } else {
         getLogger("com.launchdarkly.eventsource").level = Level.SEVERE
+        getLogger("io.ktor.util").level = Level.SEVERE
       }
     }
 
