@@ -10,6 +10,7 @@ plugins {
   id("com.diffplug.spotless") version "5.1.0"
   id("com.palantir.graal") version "0.7.1-15-g62b5090"
   id("com.squareup.wire") version "3.3.0"
+  id("com.github.johnrengelman.shadow") version "6.0.0"
 }
 
 repositories {
@@ -39,7 +40,7 @@ tasks {
   withType(KotlinCompile::class) {
     kotlinOptions.jvmTarget = "1.8"
     kotlinOptions.allWarningsAsErrors = false
-    kotlinOptions.freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=enable")
+    kotlinOptions.freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=enable", "-Xopt-in=kotlin.RequiresOptIn")
   }
 }
 

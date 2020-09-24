@@ -22,6 +22,7 @@ import com.baulsupp.okurl.credentials.DefaultToken
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.features.websocket.*
+import io.ktor.util.KtorExperimentalAPI
 import io.ktor.utils.io.core.*
 import io.netty.buffer.ByteBufAllocator.DEFAULT
 import io.netty.buffer.ByteBufUtil
@@ -161,7 +162,7 @@ class Main : Runnable {
     return builder
   }
 
-  @OptIn(ExperimentalTime::class)
+  @OptIn(ExperimentalTime::class, KtorExperimentalAPI::class)
   suspend fun buildClient(uri: String): RSocket {
     val setupPayload = buildSetupPayload() ?: Payload.Empty
 
