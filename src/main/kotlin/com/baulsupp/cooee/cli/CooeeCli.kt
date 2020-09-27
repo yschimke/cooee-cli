@@ -19,11 +19,12 @@ import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.RenewingInterceptor
 import com.baulsupp.okurl.credentials.DefaultToken
-import io.ktor.client.*
-import io.ktor.client.engine.okhttp.*
-import io.ktor.client.features.websocket.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.features.websocket.WebSockets
 import io.ktor.util.KtorExperimentalAPI
-import io.ktor.utils.io.core.*
+import io.ktor.utils.io.core.ByteReadPacket
+import io.ktor.utils.io.core.readBytes
 import io.netty.buffer.ByteBufAllocator.DEFAULT
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.CompositeByteBuf
@@ -38,7 +39,11 @@ import io.rsocket.kotlin.error.RSocketError
 import io.rsocket.kotlin.keepalive.KeepAlive
 import io.rsocket.kotlin.payload.Payload
 import io.rsocket.kotlin.payload.PayloadMimeType
-import io.rsocket.metadata.*
+import io.rsocket.metadata.AuthMetadataCodec
+import io.rsocket.metadata.CompositeMetadata
+import io.rsocket.metadata.CompositeMetadataCodec
+import io.rsocket.metadata.TaggingMetadata
+import io.rsocket.metadata.WellKnownMimeType
 import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -46,11 +51,14 @@ import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.logging.LoggingEventListener
 import picocli.CommandLine
-import picocli.CommandLine.*
+import picocli.CommandLine.Command
+import picocli.CommandLine.Help
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.ArrayList
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.time.ExperimentalTime
@@ -74,7 +82,7 @@ class Main : Runnable {
   @Option(names = ["--open"], description = ["Open External Links"])
   var open: Boolean = false
 
-  @Option(names = ["--local"], description = ["Local Server"])
+  @Option(names = ["--local", "-l"], description = ["Local Server"])
   var local: Boolean = false
 
   @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
