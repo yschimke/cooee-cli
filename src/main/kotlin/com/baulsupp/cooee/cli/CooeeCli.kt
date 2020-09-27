@@ -1,6 +1,6 @@
 package com.baulsupp.cooee.cli
 
-import a.tokenResponse
+import com.baulsupp.cooee.cli.commands.tokenResponse
 import com.baulsupp.cooee.cli.auth.CooeeServiceDefinition
 import com.baulsupp.cooee.cli.commands.Shell
 import com.baulsupp.cooee.cli.commands.cooeeCommand

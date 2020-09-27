@@ -1,4 +1,4 @@
-package a
+package com.baulsupp.cooee.cli.commands
 
 import com.baulsupp.cooee.cli.Main
 import com.baulsupp.cooee.p.TokenRequest
@@ -7,6 +7,7 @@ import com.baulsupp.cooee.p.TokenUpdate
 import com.baulsupp.okurl.authenticator.AuthInterceptor
 import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.credentials.TokenSet
+import java.lang.IllegalStateException
 
 suspend fun Main.tokenResponse(request: TokenRequest): TokenResponse? {
   suspend fun <T> AuthInterceptor<T>.getTokenString(
@@ -17,18 +18,35 @@ suspend fun Main.tokenResponse(request: TokenRequest): TokenResponse? {
     return serviceDefinition.formatCredentialsString(token)
   }
 
-  val serviceName = request.service
+  return when {
+    request.login_url != null -> {
+      outputHandler.showError("Authenticating externally")
 
-  val service = services.find { it.name() == serviceName }
-  val tokenString = service?.getTokenString(request)
+      outputHandler.openLink(request.login_url)
 
-  if (tokenString == null && request.login_url != null) {
-    outputHandler.showError("Authenticating externally")
+      TokenResponse(login_attempted = true)
+    }
+    request.token != null -> {
+      val serviceName = request.service
+      val service = services.find { it.name() == serviceName } ?: throw IllegalStateException(
+        "unknown service $serviceName")
+      updateToken(service, DefaultToken.name, request.token)
+      TokenResponse()
+    }
+    else -> {
+      val serviceName = request.service
+      val service = services.find { it.name() == serviceName }
+      val tokenString = service?.getTokenString(request)
 
-    outputHandler.openLink(request.login_url)
-
-    return TokenResponse(login_attempted = true)
+      TokenResponse(
+        token = tokenString?.let { TokenUpdate(service = serviceName, token = tokenString) })
+    }
   }
+}
 
-  return TokenResponse(token = tokenString?.let { TokenUpdate(service = serviceName, token = tokenString) })
+suspend fun <T> Main.updateToken(service: AuthInterceptor<T>, tokenSet: String, tokenString: String) {
+  // TODO skip parsing and store the string
+  outputHandler.info("Updating token")
+  val token = service.serviceDefinition.parseCredentialsString(tokenString)
+  credentialsStore.set(serviceDefinition = service.serviceDefinition, tokenSet = tokenSet, credentials = token)
 }

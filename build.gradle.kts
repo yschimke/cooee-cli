@@ -117,12 +117,12 @@ dependencies {
 
   implementation("io.rsocket:rsocket-core:1.0.2")
 
-  implementation("com.squareup.wire:wire-runtime:3.3.0")
-  implementation("com.squareup.wire:wire-moshi-adapter:3.3.0")
-  implementation("com.squareup.wire:wire-grpc-client:3.3.0") {
+  implementation("com.squareup.wire:wire-runtime:3.4.0")
+  implementation("com.squareup.wire:wire-moshi-adapter:3.4.0")
+  implementation("com.squareup.wire:wire-grpc-client:3.4.0") {
     exclude(group= "com.squareup.okhttp3")
   }
-  implementation("com.squareup.wire:wire-moshi-adapter:3.3.0")
+  implementation("com.squareup.wire:wire-moshi-adapter:3.4.0")
 
   testImplementation("org.jetbrains.kotlin:kotlin-test:1.4.10")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.10")

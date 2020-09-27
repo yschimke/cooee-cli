@@ -86,6 +86,7 @@ message TokenRequest {
   string service = 1;
   google.protobuf.StringValue token_set = 2;
   google.protobuf.StringValue login_url = 3;
+  google.protobuf.StringValue token = 4;
 }
 
 message TokenResponse {
