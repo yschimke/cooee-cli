@@ -267,9 +267,9 @@ class Main : Runnable {
     configureLogging(debug)
 
     runBlocking {
-      initialise()
-
       try {
+        initialise()
+
         runCommand()
       } catch (ue: UsageException) {
         outputHandler.showError(ue.message)
