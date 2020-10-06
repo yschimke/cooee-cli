@@ -9,7 +9,7 @@ pluginManagement {
   resolutionStrategy {
     eachPlugin {
       if (requested.id.id == "com.squareup.wire") {
-        useModule("com.squareup.wire:wire-gradle-plugin:3.3.0")
+        useModule("com.squareup.wire:wire-gradle-plugin:3.4.0")
       }
     }
   }

@@ -8,8 +8,8 @@ plugins {
   application
   id("net.nemerosa.versioning") version "2.13.1"
   id("com.diffplug.spotless") version "5.1.0"
-  id("com.palantir.graal") version "0.7.1-15-g62b5090"
-  id("com.squareup.wire") version "3.3.0"
+  id("com.palantir.graal") version "0.7.1"
+  id("com.squareup.wire") version "3.4.0"
   id("com.github.johnrengelman.shadow") version "6.0.0"
 }
 
@@ -70,14 +70,14 @@ graal {
 }
 
 dependencies {
-  implementation("info.picocli:picocli:4.5.0")
-  implementation("com.squareup.moshi:moshi:1.9.3")
-  implementation("com.squareup.moshi:moshi-adapters:1.9.3")
-  implementation("com.squareup.moshi:moshi-kotlin:1.9.3")
+  implementation("info.picocli:picocli:4.5.1")
+  implementation("com.squareup.moshi:moshi:1.11.0")
+  implementation("com.squareup.moshi:moshi-adapters:1.11.0")
+  implementation("com.squareup.moshi:moshi-kotlin:1.11.0")
   implementation("com.squareup.okhttp3:okhttp:4.9.0")
   implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
   implementation("com.squareup.okhttp3:okhttp-brotli:4.9.0")
-  implementation("com.squareup.okio:okio:2.8.0")
+  implementation("com.squareup.okio:okio:2.9.0")
   implementation("com.github.yschimke:oksocial-output:5.8")
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
   implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
@@ -92,10 +92,10 @@ dependencies {
   implementation("org.jline:jline-reader:3.16.0")
   implementation("org.jline:jline-style:3.16.0")
   implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
-  implementation("com.github.yschimke:okurl:2.25")
+  implementation("com.github.yschimke:okurl:2.26")
 
   kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
-  kapt("info.picocli:picocli-codegen:4.5.0")
+  kapt("info.picocli:picocli-codegen:4.5.1")
   implementation("org.graalvm.nativeimage:svm:20.2.0") {
     // https://youtrack.jetbrains.com/issue/KT-29513
     exclude(group= "org.graalvm.nativeimage")
