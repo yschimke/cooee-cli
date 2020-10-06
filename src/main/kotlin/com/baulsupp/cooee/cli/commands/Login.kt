@@ -46,7 +46,7 @@ suspend fun Main.tokenResponse(request: TokenRequest): TokenResponse? {
 
 suspend fun <T> Main.updateToken(service: AuthInterceptor<T>, tokenSet: String, tokenString: String) {
   // TODO skip parsing and store the string
-  outputHandler.info("Updating token")
+  outputHandler.info("Updating ${service.serviceDefinition.shortName()} token")
   val token = service.serviceDefinition.parseCredentialsString(tokenString)
   credentialsStore.set(serviceDefinition = service.serviceDefinition, tokenSet = tokenSet, credentials = token)
 }
