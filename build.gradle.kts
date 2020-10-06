@@ -78,7 +78,7 @@ dependencies {
   implementation("com.squareup.okhttp3:logging-interceptor:4.9.0")
   implementation("com.squareup.okhttp3:okhttp-brotli:4.9.0")
   implementation("com.squareup.okio:okio:2.9.0")
-  implementation("com.github.yschimke:oksocial-output:5.8")
+  implementation("com.github.yschimke:oksocial-output:5.10")
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
   implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
   implementation("io.jsonwebtoken:jjwt-jackson:0.11.2")
