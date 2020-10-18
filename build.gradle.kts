@@ -70,7 +70,7 @@ graal {
 }
 
 dependencies {
-  implementation("info.picocli:picocli:4.5.1")
+  implementation("info.picocli:picocli:4.5.2")
   implementation("com.squareup.moshi:moshi:1.11.0")
   implementation("com.squareup.moshi:moshi-adapters:1.11.0")
   implementation("com.squareup.moshi:moshi-kotlin:1.11.0")
@@ -82,8 +82,8 @@ dependencies {
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
   implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
   implementation("io.jsonwebtoken:jjwt-jackson:0.11.2")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.0")
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.0")
+  implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.10")
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.10")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.3.9")
   implementation("org.jline:jline-console:3.16.0")
@@ -95,7 +95,7 @@ dependencies {
   implementation("com.github.yschimke:okurl:2.27")
 
   kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
-  kapt("info.picocli:picocli-codegen:4.5.1")
+  kapt("info.picocli:picocli-codegen:4.5.2")
   implementation("org.graalvm.nativeimage:svm:20.2.0") {
     // https://youtrack.jetbrains.com/issue/KT-29513
     exclude(group= "org.graalvm.nativeimage")
