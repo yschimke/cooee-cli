@@ -79,7 +79,7 @@ class Main : Runnable {
   @Option(names = ["--debug"], description = ["Debug Output"])
   var debug: Boolean = false
 
-  @Option(names = ["--open"], description = ["Open External Links"])
+  @Option(names = ["--open", "-o"], description = ["Open External Links"])
   var open: Boolean = false
 
   @Option(names = ["--local", "-l"], description = ["Local Server"])

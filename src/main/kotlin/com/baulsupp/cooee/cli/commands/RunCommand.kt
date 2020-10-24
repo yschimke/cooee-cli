@@ -24,7 +24,7 @@ suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String
 
   resultFlow.collect { result ->
     val imageUrl = result.image_url?.url
-    if (result.url != null || result.message != null || imageUrl != null) {
+    if (result.url != null || result.message != null || imageUrl != null || result.table != null) {
       var imageResponse: Deferred<Response?>? = null
       if (imageUrl != null) {
         imageResponse = async {
