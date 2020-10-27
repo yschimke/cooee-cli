@@ -78,7 +78,7 @@ dependencies {
   implementation("com.squareup.okhttp3:logging-interceptor:4.10.0-RC1")
   implementation("com.squareup.okhttp3:okhttp-brotli:4.10.0-RC1")
   implementation("com.squareup.okio:okio:2.9.0")
-  implementation("com.github.yschimke:oksocial-output:5.10")
+  implementation("com.github.yschimke:oksocial-output:5.11")
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
   implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
   implementation("io.jsonwebtoken:jjwt-jackson:0.11.2")
@@ -92,7 +92,7 @@ dependencies {
   implementation("org.jline:jline-reader:3.16.0")
   implementation("org.jline:jline-style:3.16.0")
   implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
-  implementation("com.github.yschimke:okurl:2.27")
+  implementation("com.github.yschimke:okurl:2.28")
 
   kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
   kapt("info.picocli:picocli-codegen:4.5.2")
