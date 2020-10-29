@@ -105,8 +105,8 @@ dependencies {
   }
   implementation("io.github.classgraph:classgraph:4.8.87")
 
-  implementation("io.rsocket.kotlin:rsocket-core-jvm:0.10.0-frame-logging-SNAPSHOT")
-  implementation("io.rsocket.kotlin:rsocket-transport-ktor-client:0.10.0-frame-logging-SNAPSHOT")
+  implementation("io.rsocket.kotlin:rsocket-core-jvm:0.11.0-SNAPSHOT")
+  implementation("io.rsocket.kotlin:rsocket-transport-ktor-client:0.11.0-SNAPSHOT")
   implementation("io.ktor:ktor-network-tls:1.4.0")
   implementation("io.ktor:ktor-client-okhttp:1.4.0") {
     exclude(group= "com.squareup.okhttp3")

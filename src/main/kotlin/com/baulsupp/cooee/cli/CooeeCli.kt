@@ -1,10 +1,10 @@
 package com.baulsupp.cooee.cli
 
-import com.baulsupp.cooee.cli.commands.tokenResponse
 import com.baulsupp.cooee.cli.auth.CooeeServiceDefinition
 import com.baulsupp.cooee.cli.commands.Shell
 import com.baulsupp.cooee.cli.commands.cooeeCommand
 import com.baulsupp.cooee.cli.commands.showCompletions
+import com.baulsupp.cooee.cli.commands.tokenResponse
 import com.baulsupp.cooee.cli.prefs.Preferences
 import com.baulsupp.cooee.cli.util.LoggingUtil.Companion.configureLogging
 import com.baulsupp.cooee.cli.util.OkHttpResponseExtractor
@@ -30,15 +30,17 @@ import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.CompositeByteBuf
 import io.netty.buffer.Unpooled
 import io.rsocket.kotlin.RSocket
+import io.rsocket.kotlin.RSocketError
 import io.rsocket.kotlin.RSocketRequestHandler
 import io.rsocket.kotlin.cancel
-import io.rsocket.kotlin.connection.LoggingConnection
-import io.rsocket.kotlin.core.RSocketClientSupport
-import io.rsocket.kotlin.core.rSocket
-import io.rsocket.kotlin.error.RSocketError
+import io.rsocket.kotlin.core.RSocketConnector
 import io.rsocket.kotlin.keepalive.KeepAlive
+import io.rsocket.kotlin.logging.DefaultLoggerFactory
+import io.rsocket.kotlin.logging.NoopLogger
 import io.rsocket.kotlin.payload.Payload
 import io.rsocket.kotlin.payload.PayloadMimeType
+import io.rsocket.kotlin.transport.ktor.client.RSocketSupport
+import io.rsocket.kotlin.transport.ktor.client.rSocket
 import io.rsocket.metadata.AuthMetadataCodec
 import io.rsocket.metadata.CompositeMetadata
 import io.rsocket.metadata.CompositeMetadataCodec
@@ -180,44 +182,45 @@ class Main : Runnable {
       }
 
       install(WebSockets)
-      install(RSocketClientSupport) {
-        payloadMimeType = PayloadMimeType("application/json",
-          "message/x.rsocket.composite-metadata.v0")
+      install(RSocketSupport) {
+        connector = RSocketConnector {
+          loggerFactory = if (debug) DefaultLoggerFactory else NoopLogger
 
-        this.setupPayload = setupPayload
+          connectionConfig {
+            setupPayload { setupPayload }
+            keepAlive = KeepAlive(5.seconds)
+            payloadMimeType = PayloadMimeType("application/json",
+              "message/x.rsocket.composite-metadata.v0")
+          }
+          acceptor {
+            RSocketRequestHandler {
+              fireAndForget {
+                val route = it.metadata?.let { parseRoute(it) }
 
-        acceptor = {
-          RSocketRequestHandler {
-            fireAndForget = {
-              val route = it.metadata?.let { parseRoute(it) }
-
-              if (route == "log") {
-                val request = moshi.adapter(LogRequest::class.java).fromJson(it.data.readText())
-                System.err.println("Error: ${
-                  Help.Ansi.AUTO.string(
-                    " @|yellow [${request?.severity}] ${request?.message}|@")
-                }")
-              } else {
-                throw RSocketError.ApplicationError("Unknown route: $route")
+                if (route == "log") {
+                  val request = moshi.adapter(LogRequest::class.java).fromJson(it.data.readText())
+                  System.err.println("Error: ${
+                    Help.Ansi.AUTO.string(
+                      " @|yellow [${request?.severity}] ${request?.message}|@")
+                  }")
+                } else {
+                  throw RSocketError.ApplicationError("Unknown route: $route")
+                }
               }
-            }
-            requestResponse = {
-              val route = it.metadata?.let { parseRoute(it) }
+              requestResponse {
+                val route = it.metadata?.let { parseRoute(it) }
 
-              if (route == "token") {
-                // TokenRequest
-                val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())!!
-                val response = tokenResponse(request)
-                Payload(moshi.adapter(TokenResponse::class.java).toJson(response))
-              } else {
-                throw RSocketError.ApplicationError("Unknown route: $route")
+                if (route == "token") {
+                  // TokenRequest
+                  val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())!!
+                  val response = tokenResponse(request)
+                  Payload(moshi.adapter(TokenResponse::class.java).toJson(response))
+                } else {
+                  throw RSocketError.ApplicationError("Unknown route: $route")
+                }
               }
             }
           }
-        }
-        keepAlive = KeepAlive(5.seconds)
-        if (debug) {
-          plugin = plugin.copy(connection = listOf(::LoggingConnection))
         }
       }
     }
