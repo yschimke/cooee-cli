@@ -1,6 +1,6 @@
 package com.baulsupp.cooee.cli.util
 
-import com.baulsupp.oksocial.output.ResponseExtractor
+import com.baulsupp.oksocial.output.responses.ResponseExtractor
 import okhttp3.Response
 import okio.BufferedSource
 

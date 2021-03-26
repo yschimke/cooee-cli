@@ -11,14 +11,11 @@ import com.baulsupp.cooee.p.Table
 import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.oauth2.Oauth2Token
 import com.baulsupp.okurl.credentials.TokenValue
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import okhttp3.Response
 
+@OptIn(ExperimentalCoroutinesApi::class)
 suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String>): Int = coroutineScope {
   val resultFlow = runCommand(runArguments)
 
@@ -47,7 +44,6 @@ suspend fun Main.cooeeCommand(openExtraLinks: Boolean, runArguments: List<String
         outputHandler.info(tableToString(result.table))
       }
       if (result.url != null && (result.status == CommandStatus.REDIRECT || openExtraLinks)) {
-        @Suppress("EXPERIMENTAL_API_USAGE")
         launch(start = CoroutineStart.ATOMIC) {
           outputHandler.openLink(result.url)
         }

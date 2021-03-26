@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  kotlin("jvm") version "1.4.10"
-  kotlin("kapt") version "1.4.10"
+  kotlin("jvm") version "1.4.31"
+  kotlin("kapt") version "1.4.31"
   `maven-publish`
   application
   id("net.nemerosa.versioning") version "2.13.1"
@@ -28,7 +28,7 @@ version = projectVersion
 
 application {
   // Define the main class for the application
-  mainClassName = "com.baulsupp.cooee.cli.Main"
+  mainClass.set("com.baulsupp.cooee.cli.Main")
 }
 
 java {
@@ -54,7 +54,7 @@ wire {
 graal {
   mainClass("com.baulsupp.cooee.cli.Main")
   outputName("cooee")
-  graalVersion("20.2.0")
+  graalVersion("21.0.0.2")
   javaVersion("11")
 
   option("--enable-https")
@@ -74,29 +74,30 @@ dependencies {
   implementation("com.squareup.moshi:moshi:1.11.0")
   implementation("com.squareup.moshi:moshi-adapters:1.11.0")
   implementation("com.squareup.moshi:moshi-kotlin:1.11.0")
-  implementation("com.squareup.okhttp3:okhttp:4.10.0-RC1")
-  implementation("com.squareup.okhttp3:logging-interceptor:4.10.0-RC1")
-  implementation("com.squareup.okhttp3:okhttp-brotli:4.10.0-RC1")
-  implementation("com.squareup.okio:okio:2.9.0")
-  implementation("com.github.yschimke:oksocial-output:5.12")
+  implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
+  implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
+  implementation("com.squareup.okhttp3:okhttp-brotli:5.0.0-alpha.2")
+  implementation("com.github.yschimke:oksocial-output:6.1") {
+    exclude(group= "org.jetbrains.kotlinx")
+  }
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
   implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
   implementation("io.jsonwebtoken:jjwt-jackson:0.11.2")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.10")
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.10")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.3.9")
+  implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.31")
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.31")
   implementation("org.jline:jline-console:3.16.0")
   implementation("org.jline:jline-terminal:3.16.0")
   implementation("org.jline:jline-terminal-jansi:3.16.0")
   implementation("org.jline:jline-reader:3.16.0")
   implementation("org.jline:jline-style:3.16.0")
   implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
-  implementation("com.github.yschimke:okurl:2.28")
+  implementation("com.github.yschimke:okurl:3.1") {
+    isTransitive = false
+  }
 
-  kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
+  kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
   kapt("info.picocli:picocli-codegen:4.5.2")
-  implementation("org.graalvm.nativeimage:svm:20.2.0") {
+  implementation("org.graalvm.nativeimage:svm:21.0.0.2") {
     // https://youtrack.jetbrains.com/issue/KT-29513
     exclude(group= "org.graalvm.nativeimage")
     exclude(group= "org.graalvm.truffle")
@@ -105,17 +106,17 @@ dependencies {
   }
   implementation("io.github.classgraph:classgraph:4.8.87")
 
-  implementation("io.rsocket.kotlin:rsocket-core-jvm:0.11.0-SNAPSHOT")
-  implementation("io.rsocket.kotlin:rsocket-transport-ktor-client:0.11.0-SNAPSHOT")
-  implementation("io.ktor:ktor-network-tls:1.4.0")
-  implementation("io.ktor:ktor-client-okhttp:1.4.0") {
-    exclude(group= "com.squareup.okhttp3")
-  }
-  implementation("io.ktor:ktor-client-core-jvm:1.4.0") {
-    exclude(group= "com.squareup.okhttp3")
-  }
+  implementation("io.swagger.parser.v3:swagger-parser:2.0.21")
 
-  implementation("io.rsocket:rsocket-core:1.0.2")
+  implementation("io.rsocket.kotlin:rsocket-core-jvm:0.12.0")
+  implementation("io.rsocket.kotlin:rsocket-transport-ktor-client:0.12.0")
+  implementation("io.ktor:ktor-network-tls:1.5.2")
+  implementation("io.ktor:ktor-client-okhttp:1.5.2") {
+    exclude(group= "com.squareup.okhttp3")
+  }
+  implementation("io.ktor:ktor-client-core-jvm:1.5.2") {
+    exclude(group= "com.squareup.okhttp3")
+  }
 
   implementation("com.squareup.wire:wire-runtime:3.4.0")
   implementation("com.squareup.wire:wire-moshi-adapter:3.4.0")
@@ -124,10 +125,10 @@ dependencies {
   }
   implementation("com.squareup.wire:wire-moshi-adapter:3.4.0")
 
-  testImplementation("org.jetbrains.kotlin:kotlin-test:1.4.10")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.10")
+  testImplementation("org.jetbrains.kotlin:kotlin-test:1.4.31")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.31")
 
-  testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.2")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.5.2")
 }
 
 if (properties.containsKey("graalbuild")) {

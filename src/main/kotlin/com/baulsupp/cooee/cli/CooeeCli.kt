@@ -13,39 +13,31 @@ import com.baulsupp.cooee.cli.util.moshi
 import com.baulsupp.cooee.p.LogRequest
 import com.baulsupp.cooee.p.TokenRequest
 import com.baulsupp.cooee.p.TokenResponse
-import com.baulsupp.oksocial.output.ConsoleHandler
-import com.baulsupp.oksocial.output.OutputHandler
 import com.baulsupp.oksocial.output.UsageException
+import com.baulsupp.oksocial.output.handler.ConsoleHandler
+import com.baulsupp.oksocial.output.handler.OutputHandler
 import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.RenewingInterceptor
 import com.baulsupp.okurl.credentials.DefaultToken
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.features.websocket.WebSockets
-import io.ktor.util.KtorExperimentalAPI
-import io.ktor.utils.io.core.ByteReadPacket
-import io.ktor.utils.io.core.readBytes
-import io.netty.buffer.ByteBufAllocator.DEFAULT
-import io.netty.buffer.ByteBufUtil
-import io.netty.buffer.CompositeByteBuf
-import io.netty.buffer.Unpooled
+import io.ktor.client.*
+import io.ktor.client.engine.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.features.websocket.*
+import io.ktor.util.*
+import io.ktor.utils.io.core.*
+import io.rsocket.kotlin.ExperimentalMetadataApi
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.RSocketError
 import io.rsocket.kotlin.RSocketRequestHandler
-import io.rsocket.kotlin.cancel
 import io.rsocket.kotlin.core.RSocketConnector
 import io.rsocket.kotlin.keepalive.KeepAlive
 import io.rsocket.kotlin.logging.DefaultLoggerFactory
 import io.rsocket.kotlin.logging.NoopLogger
-import io.rsocket.kotlin.payload.Payload
-import io.rsocket.kotlin.payload.PayloadMimeType
+import io.rsocket.kotlin.metadata.*
+import io.rsocket.kotlin.metadata.security.BearerAuthMetadata
+import io.rsocket.kotlin.payload.*
 import io.rsocket.kotlin.transport.ktor.client.RSocketSupport
 import io.rsocket.kotlin.transport.ktor.client.rSocket
-import io.rsocket.metadata.AuthMetadataCodec
-import io.rsocket.metadata.CompositeMetadata
-import io.rsocket.metadata.CompositeMetadataCodec
-import io.rsocket.metadata.TaggingMetadata
-import io.rsocket.metadata.WellKnownMimeType
 import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -53,14 +45,11 @@ import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.logging.LoggingEventListener
 import picocli.CommandLine
-import picocli.CommandLine.Command
-import picocli.CommandLine.Help
-import picocli.CommandLine.Option
-import picocli.CommandLine.Parameters
+import picocli.CommandLine.*
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
-import java.util.ArrayList
+import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.time.ExperimentalTime
@@ -71,6 +60,7 @@ import kotlin.time.seconds
  */
 @Command(name = "cooee", description = ["CLI for Coo.ee"],
   mixinStandardHelpOptions = true, version = ["dev"])
+@OptIn(ExperimentalMetadataApi::class)
 class Main : Runnable {
   @Option(names = ["--option-complete"], description = ["Complete options"])
   var complete: String? = null
@@ -214,7 +204,9 @@ class Main : Runnable {
                   // TokenRequest
                   val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())!!
                   val response = tokenResponse(request)
-                  Payload(moshi.adapter(TokenResponse::class.java).toJson(response))
+                  buildPayload {
+                    data(moshi.adapter(TokenResponse::class.java).toJson(response))
+                  }
                 } else {
                   throw RSocketError.ApplicationError("Unknown route: $route")
                 }
@@ -227,7 +219,7 @@ class Main : Runnable {
 
     return client.rSocket(uri, secure = uri.startsWith("wss")).also {
       closeables.add(0) {
-        it.cancel()
+//        it.cancelAndJoin()
         client.close()
       }
     }
@@ -237,28 +229,18 @@ class Main : Runnable {
     val token = credentialsStore.get(CooeeServiceDefinition, DefaultToken.name)
 
     if (token != null) {
-      val routingMetadata = AuthMetadataCodec.encodeBearerMetadata(DEFAULT, token.toCharArray())
-      val compositeByteBuf = CompositeByteBuf(DEFAULT, false, 1)
-      CompositeMetadataCodec.encodeAndAddMetadata(compositeByteBuf, DEFAULT,
-        WellKnownMimeType.MESSAGE_RSOCKET_AUTHENTICATION, routingMetadata)
-      val metadataBytes = ByteBufUtil.getBytes(compositeByteBuf)
-
-      return Payload(byteArrayOf(), metadataBytes)
+      return buildPayload {
+        compositeMetadata {
+          add(BearerAuthMetadata(token))
+        }
+      }
     }
 
     return null
   }
 
   fun parseRoute(metadata: ByteReadPacket): String? {
-    CompositeMetadata(Unpooled.wrappedBuffer(metadata.readBytes()), false).forEach {
-      if (it.mimeType == "message/x.rsocket.routing.v0") {
-        TaggingMetadata("message/x.rsocket.routing.v0", it.content).forEach { route ->
-          return route
-        }
-      }
-    }
-
-    return null
+    return metadata.read(CompositeMetadata).getOrNull(RoutingMetadata)?.tags?.firstOrNull()
   }
 
   private fun versionString(): String {
