@@ -10,7 +10,6 @@ plugins {
   id("com.diffplug.spotless") version "5.1.0"
   id("com.palantir.graal") version "0.7.1"
   id("com.squareup.wire") version "3.4.0"
-  id("com.github.johnrengelman.shadow") version "6.0.0"
 }
 
 repositories {
@@ -108,8 +107,8 @@ dependencies {
 
   implementation("io.swagger.parser.v3:swagger-parser:2.0.21")
 
-  implementation("io.rsocket.kotlin:rsocket-core-jvm:0.12.0")
-  implementation("io.rsocket.kotlin:rsocket-transport-ktor-client:0.12.0")
+  implementation("io.rsocket.kotlin:rsocket-core-jvm:0.13.0-SNAPSHOT")
+  implementation("io.rsocket.kotlin:rsocket-transport-ktor-client:0.13.0-SNAPSHOT")
   implementation("io.ktor:ktor-network-tls:1.5.2")
   implementation("io.ktor:ktor-client-okhttp:1.5.2") {
     exclude(group= "com.squareup.okhttp3")
