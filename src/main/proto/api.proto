@@ -121,3 +121,12 @@ message TableColumn {
 message Table {
   repeated TableColumn columns = 1;
 }
+
+message RegisterServerRequest {
+  repeated string commands = 1;
+  repeated string values = 2;
+}
+
+message RegisterServerResponse {
+  string uuid = 1;
+}

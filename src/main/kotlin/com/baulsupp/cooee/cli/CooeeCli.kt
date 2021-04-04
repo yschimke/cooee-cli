@@ -29,6 +29,7 @@ import io.rsocket.kotlin.ExperimentalMetadataApi
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.RSocketError
 import io.rsocket.kotlin.RSocketRequestHandler
+import io.rsocket.kotlin.cancelAndJoin
 import io.rsocket.kotlin.core.RSocketConnector
 import io.rsocket.kotlin.keepalive.KeepAlive
 import io.rsocket.kotlin.logging.DefaultLoggerFactory
@@ -46,12 +47,12 @@ import okhttp3.brotli.BrotliInterceptor
 import okhttp3.logging.LoggingEventListener
 import picocli.CommandLine
 import picocli.CommandLine.*
-import java.io.Closeable
 import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
@@ -84,7 +85,7 @@ class Main : Runnable {
 
   lateinit var outputHandler: OutputHandler<Response>
 
-  private val closeables = mutableListOf<Closeable>()
+  private val closeables = mutableListOf<suspend () -> Unit>()
 
   lateinit var rsocketClient: RSocket
 
@@ -122,13 +123,6 @@ class Main : Runnable {
       outputHandler = ConsoleHandler.instance(OkHttpResponseExtractor)
     }
 
-    closeables.add(Closeable {
-      if (this::client.isInitialized) {
-        client.connectionPool.evictAll()
-        client.dispatcher.executorService.shutdownNow()
-      }
-    })
-
     if (!this::client.isInitialized) {
       val clientBuilder = createClientBuilder()
 
@@ -136,6 +130,15 @@ class Main : Runnable {
     }
 
     rsocketClient = buildClient(if (local) "ws://localhost:8080/rsocket" else Preferences.local.api)
+
+    closeables.add {
+      rsocketClient.cancelAndJoin()
+    }
+
+    closeables.add {
+      client.connectionPool.evictAll()
+      client.dispatcher.executorService.shutdownNow()
+    }
   }
 
   private fun createClientBuilder(): OkHttpClient.Builder {
@@ -185,9 +188,10 @@ class Main : Runnable {
           acceptor {
             RSocketRequestHandler {
               fireAndForget {
-                val route = it.metadata?.let { parseRoute(it) }
+                val route = it.metadata?.let { route -> parseRoute(route) }
 
                 if (route == "log") {
+                  @Suppress("BlockingMethodInNonBlockingContext")
                   val request = moshi.adapter(LogRequest::class.java).fromJson(it.data.readText())
                   System.err.println("Error: ${
                     Help.Ansi.AUTO.string(
@@ -197,12 +201,15 @@ class Main : Runnable {
                   throw RSocketError.ApplicationError("Unknown route: $route")
                 }
               }
-              requestResponse {
-                val route = it.metadata?.let { parseRoute(it) }
+              requestResponse { rsocket ->
+                val route = rsocket.metadata?.let { route -> parseRoute(route) }
 
                 if (route == "token") {
                   // TokenRequest
-                  val request = moshi.adapter(TokenRequest::class.java).fromJson(it.data.readText())!!
+                  @Suppress("BlockingMethodInNonBlockingContext",
+                    "BlockingMethodInNonBlockingContext"
+                  )
+                  val request = moshi.adapter(TokenRequest::class.java).fromJson(rsocket.data.readText())!!
                   val response = tokenResponse(request)
                   buildPayload {
                     data(moshi.adapter(TokenResponse::class.java).toJson(response))
@@ -217,15 +224,15 @@ class Main : Runnable {
       }
     }
 
-    return client.rSocket(uri, secure = uri.startsWith("wss")).also {
+    return client.rSocket(uri, secure = uri.startsWith("wss")).also { rsocket ->
       closeables.add(0) {
-//        it.cancelAndJoin()
+        rsocket.cancelAndJoin()
         client.close()
       }
     }
   }
 
-  suspend fun buildSetupPayload(): Payload? {
+  private suspend fun buildSetupPayload(): Payload? {
     val token = credentialsStore.get(CooeeServiceDefinition, DefaultToken.name)
 
     if (token != null) {
@@ -239,7 +246,7 @@ class Main : Runnable {
     return null
   }
 
-  fun parseRoute(metadata: ByteReadPacket): String? {
+  private fun parseRoute(metadata: ByteReadPacket): String? {
     return metadata.read(CompositeMetadata).getOrNull(RoutingMetadata)?.tags?.firstOrNull()
   }
 
@@ -264,16 +271,16 @@ class Main : Runnable {
       } finally {
         close()
       }
-      System.exit(-1)
+      exitProcess(-1)
     }
   }
 
-  fun close() {
+  suspend fun close() {
     for (c in closeables) {
       try {
-        c.close()
+        c()
       } catch (e: Exception) {
-        logger.log(Level.FINE, "close failed", e)
+        logger.log(Level.WARNING, "close failed", e)
       }
     }
   }
@@ -284,7 +291,7 @@ class Main : Runnable {
     }
     val cacheDir = File(configDir, "cache")
 
-    val logger by lazy { Logger.getLogger("main") }
+    val logger: Logger by lazy { Logger.getLogger("main") }
 
     @JvmStatic
     fun main(vararg args: String) {
