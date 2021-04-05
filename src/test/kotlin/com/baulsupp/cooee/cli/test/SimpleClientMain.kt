@@ -4,5 +4,6 @@ import com.baulsupp.cooee.sdk.SimpleClient
 
 suspend fun main() {
   val client = SimpleClient()
-  client.run("github")
+  client.run("welcome")
+  client.main.close()
 }

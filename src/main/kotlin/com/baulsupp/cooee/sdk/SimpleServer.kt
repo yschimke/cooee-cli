@@ -10,6 +10,7 @@ import com.baulsupp.cooee.p.CommandRequest
 import com.baulsupp.cooee.p.CommandResponse
 import com.baulsupp.cooee.p.CompletionRequest
 import com.baulsupp.cooee.p.CompletionResponse
+import com.baulsupp.cooee.p.CompletionSuggestion
 import com.baulsupp.cooee.p.LogRequest
 import com.baulsupp.cooee.p.RegisterServerRequest
 import com.baulsupp.cooee.p.RegisterServerResponse
@@ -38,7 +39,10 @@ import io.rsocket.kotlin.payload.data
 import io.rsocket.kotlin.transport.ktor.client.RSocketSupport
 import io.rsocket.kotlin.transport.ktor.client.rSocket
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.brotli.BrotliInterceptor
@@ -51,7 +55,7 @@ import kotlin.time.seconds
 class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
   lateinit var command: String
 
-  lateinit var commandHandler: (CommandRequest) -> Flow<CommandResponse>
+  lateinit var commandHandler: suspend (CommandRequest) -> Flow<CommandResponse>
 
   lateinit var completionHandler: suspend (CompletionRequest) -> CompletionResponse
 
@@ -60,6 +64,30 @@ class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
   private lateinit var client: OkHttpClient
 
   private val closeables = mutableListOf<suspend () -> Unit>()
+
+  fun exportSingleCommand(command: String, fn: suspend (CommandRequest) -> Flow<CommandResponse>) {
+    this.command = command
+    this.completionHandler = {
+      CompletionResponse(listOf(CompletionSuggestion(word = command)))
+    }
+    commandHandler = fn
+
+    runBlocking {
+      start()
+    }
+  }
+
+  fun exportSimpleCommands(command: String, completer: suspend (CompletionRequest) -> List<String>, fn: suspend (CommandRequest) -> Flow<CommandResponse>) {
+    this.command = command
+    this.completionHandler = { request ->
+      CompletionResponse(completions = completer(request).map { CompletionSuggestion(word = it) })
+    }
+    commandHandler = fn
+
+    runBlocking {
+      start()
+    }
+  }
 
   suspend fun start() {
     System.setProperty("apple.awt.UIElement", "true")
@@ -110,8 +138,6 @@ class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
 
   @OptIn(ExperimentalTime::class, KtorExperimentalAPI::class)
   suspend fun buildClient(uri: String): RSocket {
-    val setupPayload = buildSetupPayload()
-
     val client = HttpClient(OkHttp) {
       engine {
         preconfigured = client
@@ -156,7 +182,7 @@ class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
                     val request = moshi.adapter(CompletionRequest::class.java)
                       .fromJson(requestPayload.data.readText())!!
                     val responseAdapter = moshi.adapter(CompletionResponse::class.java)
-                    val response = completionHandler(request)
+                    val response = complete(request)
                     buildPayload {
                       data(responseAdapter.toJson(response))
                     }
@@ -173,10 +199,12 @@ class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
                     val request = moshi.adapter(CommandRequest::class.java)
                       .fromJson(requestPayload.data.readText())!!
                     val responseAdapter = moshi.adapter(CommandResponse::class.java)
-                    runCommand(request).map {
-                      buildPayload {
-                        data(responseAdapter.toJson(it))
-                      }
+                    flow {
+                      emitAll(runCommand(request).map {
+                        buildPayload {
+                          data(responseAdapter.toJson(it))
+                        }
+                      })
                     }
                   }
                   else -> {
@@ -198,7 +226,7 @@ class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
     }
   }
 
-  private fun runCommand(request: CommandRequest): Flow<CommandResponse> {
+  private suspend fun runCommand(request: CommandRequest): Flow<CommandResponse> {
     return commandHandler(request)
   }
 

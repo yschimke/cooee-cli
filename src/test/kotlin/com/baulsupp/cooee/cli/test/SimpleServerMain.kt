@@ -11,9 +11,11 @@ suspend fun main() {
   val server = SimpleServer(debug = false, local = true)
   server.command = "welcome"
   server.completionHandler = { request ->
+    println("complete: $request")
     CompletionResponse(listOf(CompletionSuggestion(word = "welcome")))
   }
   server.commandHandler = { request: CommandRequest ->
+    println("ccommand: $request")
     flowOf(CommandResponse(message = "Welcome"))
   }
   server.start()
