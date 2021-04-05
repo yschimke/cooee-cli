@@ -70,27 +70,23 @@ graal {
 
 dependencies {
   implementation("info.picocli:picocli:4.5.2")
-  implementation("com.squareup.moshi:moshi:1.11.0")
-  implementation("com.squareup.moshi:moshi-adapters:1.11.0")
-  implementation("com.squareup.moshi:moshi-kotlin:1.11.0")
-  implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
-  implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
-  implementation("com.squareup.okhttp3:okhttp-brotli:5.0.0-alpha.2")
-  implementation("com.github.yschimke:oksocial-output:6.1") {
-    exclude(group= "org.jetbrains.kotlinx")
-  }
+  api("com.squareup.moshi:moshi:1.11.0")
+  api("com.squareup.moshi:moshi-adapters:1.11.0")
+  api("com.squareup.moshi:moshi-kotlin:1.11.0")
+  api("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
+  api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
+  api("com.squareup.okhttp3:okhttp-brotli:5.0.0-alpha.2")
+  api("com.squareup.okhttp3:okhttp-tls:5.0.0-alpha.2")
+  api("com.squareup.okhttp3:okhttp-sse:5.0.0-alpha.2")
+  api("com.squareup.okhttp3:okhttp-dnsoverhttps:5.0.0-alpha.2")
+  api("com.github.yschimke:oksocial-output:6.2")
   implementation("io.jsonwebtoken:jjwt-api:0.11.2")
   implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
   implementation("io.jsonwebtoken:jjwt-jackson:0.11.2")
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.31")
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.31")
-  implementation("org.jline:jline-console:3.16.0")
-  implementation("org.jline:jline-terminal:3.16.0")
-  implementation("org.jline:jline-terminal-jansi:3.16.0")
-  implementation("org.jline:jline-reader:3.16.0")
-  implementation("org.jline:jline-style:3.16.0")
+  api("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.31")
   implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
-  implementation("com.github.yschimke:okurl:3.1") {
+  implementation("com.github.yschimke:okurl:3.2") {
     isTransitive = false
   }
 

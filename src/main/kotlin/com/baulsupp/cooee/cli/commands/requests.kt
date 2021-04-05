@@ -2,6 +2,7 @@ package com.baulsupp.cooee.cli.commands
 
 import com.baulsupp.cooee.cli.util.moshi
 import io.ktor.utils.io.core.*
+import io.rsocket.kotlin.ExperimentalMetadataApi
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.metadata.CompositeMetadata
 import io.rsocket.kotlin.metadata.RoutingMetadata
@@ -11,6 +12,7 @@ import io.rsocket.kotlin.payload.data
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+@OptIn(ExperimentalMetadataApi::class)
 fun buildMetadata(route: String): ByteReadPacket {
   return CompositeMetadata(RoutingMetadata(route)).toPacket()
 }
