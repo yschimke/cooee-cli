@@ -2,14 +2,14 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  kotlin("jvm") version "1.4.31"
-  kotlin("kapt") version "1.4.31"
+  kotlin("jvm") version "1.7.10"
+  kotlin("kapt") version "1.7.10"
   `maven-publish`
   application
-  id("net.nemerosa.versioning") version "2.13.1"
-  id("com.diffplug.spotless") version "5.1.0"
-  id("com.palantir.graal") version "0.7.1"
-  id("com.squareup.wire") version "3.4.0"
+  id("net.nemerosa.versioning") version "2.15.1"
+  id("com.diffplug.spotless") version "6.11.0"
+  id("com.palantir.graal") version "0.12.0"
+  id("com.squareup.wire") version "4.4.1"
 }
 
 repositories {
@@ -31,13 +31,13 @@ application {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
 tasks {
   withType(KotlinCompile::class) {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "17"
     kotlinOptions.allWarningsAsErrors = false
     kotlinOptions.freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=enable", "-Xopt-in=kotlin.RequiresOptIn")
   }
@@ -53,77 +53,69 @@ wire {
 graal {
   mainClass("com.baulsupp.cooee.cli.Main")
   outputName("cooee")
-  graalVersion("21.0.0.2")
-  javaVersion("11")
+  graalVersion("22.2.0")
+  javaVersion("17")
 
   option("--enable-https")
-  option("--no-fallback")
   option("--allow-incomplete-classpath")
-
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-    // May be possible without, but autodetection is problematic on Windows 10
-    // see https://github.com/palantir/gradle-graal
-    // see https://www.graalvm.org/docs/reference-manual/native-image/#prerequisites
-    windowsVsVarsPath("C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat")
-  }
+  option("--no-fallback")
 }
 
 dependencies {
-  implementation("info.picocli:picocli:4.5.2")
-  api("com.squareup.moshi:moshi:1.11.0")
-  api("com.squareup.moshi:moshi-adapters:1.11.0")
-  api("com.squareup.moshi:moshi-kotlin:1.11.0")
-  api("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
-  api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
-  api("com.squareup.okhttp3:okhttp-brotli:5.0.0-alpha.2")
-  api("com.squareup.okhttp3:okhttp-tls:5.0.0-alpha.2")
-  api("com.squareup.okhttp3:okhttp-sse:5.0.0-alpha.2")
-  api("com.squareup.okhttp3:okhttp-dnsoverhttps:5.0.0-alpha.2")
-  api("com.github.yschimke:oksocial-output:6.2")
-  implementation("io.jsonwebtoken:jjwt-api:0.11.2")
-  implementation("io.jsonwebtoken:jjwt-impl:0.11.2")
-  implementation("io.jsonwebtoken:jjwt-jackson:0.11.2")
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.31")
-  api("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.31")
-  implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha1")
-  implementation("com.github.yschimke:okurl:3.2") {
+  implementation("info.picocli:picocli:4.6.3")
+  api("com.squareup.moshi:moshi:1.14.0")
+  api("com.squareup.moshi:moshi-adapters:1.14.0")
+  api("com.squareup.moshi:moshi-kotlin:1.14.0")
+  api("com.squareup.okhttp3:okhttp:5.0.0-alpha.10")
+  api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.10")
+  api("com.squareup.okhttp3:okhttp-brotli:5.0.0-alpha.10")
+  api("com.squareup.okhttp3:okhttp-tls:5.0.0-alpha.10")
+  api("com.squareup.okhttp3:okhttp-sse:5.0.0-alpha.10")
+  api("com.squareup.okhttp3:okhttp-dnsoverhttps:5.0.0-alpha.10")
+  api("com.github.yschimke.schoutput:schoutput:0.9.2")
+  implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+  implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
+  implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
+  implementation("org.jetbrains.kotlin:kotlin-reflect:1.7.10")
+  api("org.jetbrains.kotlin:kotlin-stdlib:1.7.10")
+  implementation("org.slf4j:slf4j-jdk14:2.0.0")
+  implementation("com.github.yschimke:okurl:v4.3.0") {
     isTransitive = false
   }
 
-  kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
-  kapt("info.picocli:picocli-codegen:4.5.2")
-  implementation("org.graalvm.nativeimage:svm:21.0.0.2") {
+  kapt("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
+  kapt("info.picocli:picocli-codegen:4.6.3")
+  implementation("org.graalvm.nativeimage:svm:22.2.0") {
     // https://youtrack.jetbrains.com/issue/KT-29513
     exclude(group= "org.graalvm.nativeimage")
     exclude(group= "org.graalvm.truffle")
 //    exclude(group= "org.graalvm.sdk")
     exclude(group= "org.graalvm.compiler")
   }
-  implementation("io.github.classgraph:classgraph:4.8.87")
+  implementation("io.github.classgraph:classgraph:4.8.149")
 
-  implementation("io.swagger.parser.v3:swagger-parser:2.0.21")
+  implementation("io.swagger.parser.v3:swagger-parser:2.1.2")
 
-  implementation("io.rsocket.kotlin:rsocket-core-jvm:0.13.0-SNAPSHOT")
-  implementation("io.rsocket.kotlin:rsocket-transport-ktor-client:0.13.0-SNAPSHOT")
-  implementation("io.ktor:ktor-network-tls:1.5.2")
-  implementation("io.ktor:ktor-client-okhttp:1.5.2") {
+  implementation("io.rsocket.kotlin:rsocket-core-jvm:0.15.4")
+  implementation("io.ktor:ktor-network-tls:2.1.1")
+  implementation("io.ktor:ktor-client-okhttp:2.1.1") {
     exclude(group= "com.squareup.okhttp3")
   }
-  implementation("io.ktor:ktor-client-core-jvm:1.5.2") {
+  implementation("io.ktor:ktor-client-core-jvm:2.1.1") {
     exclude(group= "com.squareup.okhttp3")
   }
 
-  implementation("com.squareup.wire:wire-runtime:3.4.0")
-  implementation("com.squareup.wire:wire-moshi-adapter:3.4.0")
-  implementation("com.squareup.wire:wire-grpc-client:3.4.0") {
+  implementation("com.squareup.wire:wire-runtime:4.4.1")
+  implementation("com.squareup.wire:wire-moshi-adapter:4.4.1")
+  implementation("com.squareup.wire:wire-grpc-client:4.4.1") {
     exclude(group= "com.squareup.okhttp3")
   }
-  implementation("com.squareup.wire:wire-moshi-adapter:3.4.0")
+  implementation("com.squareup.wire:wire-moshi-adapter:4.4.1")
 
-  testImplementation("org.jetbrains.kotlin:kotlin-test:1.4.31")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.4.31")
+  testImplementation("org.jetbrains.kotlin:kotlin-test:1.7.10")
+  testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.7.10")
 
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.5.2")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
