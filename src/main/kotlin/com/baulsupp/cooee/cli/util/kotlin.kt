@@ -53,7 +53,7 @@ suspend inline fun <reified T> OkHttpClient.query(request: Request): T {
   return moshi.adapter(T::class.java).fromJson(stringResult)!!
 }
 
-suspend fun OkHttpClient.queryForString(request: Request): String = execute(request).body!!.string()
+suspend fun OkHttpClient.queryForString(request: Request): String = execute(request).body.string()
 
 suspend fun OkHttpClient.queryForString(url: String): String =
   this.queryForString(request(url))
@@ -64,7 +64,7 @@ suspend fun OkHttpClient.execute(request: Request): Response {
   val response = call.await()
 
   if (!response.isSuccessful) {
-    val responseString = response.body!!.string()
+    val responseString = response.body.string()
 
     val msg: String = if (responseString.isNotEmpty()) {
       responseString

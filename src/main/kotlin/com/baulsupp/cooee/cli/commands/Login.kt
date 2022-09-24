@@ -7,7 +7,6 @@ import com.baulsupp.cooee.p.TokenUpdate
 import com.baulsupp.okurl.authenticator.AuthInterceptor
 import com.baulsupp.okurl.credentials.DefaultToken
 import com.baulsupp.okurl.credentials.TokenSet
-import java.lang.IllegalStateException
 
 suspend fun Main.tokenResponse(request: TokenRequest): TokenResponse? {
   suspend fun <T> AuthInterceptor<T>.getTokenString(

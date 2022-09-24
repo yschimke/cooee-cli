@@ -46,9 +46,8 @@ import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.logging.LoggingEventListener
-import picocli.CommandLine
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
 @OptIn(ExperimentalMetadataApi::class)
 class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
@@ -163,11 +162,7 @@ class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
                     @Suppress("BlockingMethodInNonBlockingContext")
                     val request =
                       moshi.adapter(LogRequest::class.java).fromJson(requestPayload.data.readText())
-                    System.err.println(
-                      CommandLine.Help.Ansi.AUTO.string(
-                        " @|yellow [${request?.severity}] ${request?.message}|@"
-                      )
-                    )
+                    System.err.println("${request?.severity}] ${request?.message}")
                   }
                   else -> {
                     throw RSocketError.ApplicationError("Unknown route: $route")

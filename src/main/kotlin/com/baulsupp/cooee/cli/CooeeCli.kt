@@ -20,6 +20,12 @@ import com.baulsupp.okurl.services.ServiceList
 import com.baulsupp.schoutput.UsageException
 import com.baulsupp.schoutput.handler.OutputHandler
 import com.baulsupp.schoutput.outputHandlerInstance
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
 import io.ktor.client.*
 import io.ktor.client.engine.*
 import io.ktor.client.engine.okhttp.*
@@ -46,41 +52,30 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.brotli.BrotliInterceptor
 import okhttp3.logging.LoggingEventListener
-import picocli.CommandLine
-import picocli.CommandLine.*
 import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
 /**
  * Simple command line tool to make a Coo.ee command.
  */
-@Command(name = "cooee", description = ["CLI for Coo.ee"],
-  mixinStandardHelpOptions = true, version = ["dev"])
-@OptIn(ExperimentalMetadataApi::class)
-class Main : Runnable {
-  @Option(names = ["--option-complete"], description = ["Complete options"])
-  var complete: String? = null
+class Main : CliktCommand(name = "cooee", help = "CLI for Coo.ee") {
+  val complete: String? by option("--option-complete", help = "Complete options")
 
-  @Option(names = ["--command-complete"], description = ["Complete command"])
-  var commandComplete: Boolean = false
+  val commandComplete: Boolean by option("--command-complete", help="Complete command").flag()
 
-  @Option(names = ["--debug"], description = ["Debug Output"])
-  var debug: Boolean = false
+  val debug: Boolean by option("--debug", help="Debug Output").flag()
 
-  @Option(names = ["--open", "-o"], description = ["Open External Links"])
-  var open: Boolean = false
+  val open: Boolean by option("--open", "-o", help="Open External Links").flag()
 
-  @Option(names = ["--local", "-l"], description = ["Local Server"])
-  var local: Boolean = false
+  val local: Boolean by option("--local", "-l", help="Local Server").flag()
 
-  @Parameters(paramLabel = "arguments", description = ["Remote resource URLs"])
-  var arguments: MutableList<String> = ArrayList()
+  val arguments: List<String> by argument("arguments", help = "Remote resource URLs").multiple()
 
   lateinit var client: OkHttpClient
 
@@ -166,7 +161,7 @@ class Main : Runnable {
     return builder
   }
 
-  @OptIn(ExperimentalTime::class, KtorExperimentalAPI::class)
+  @OptIn(ExperimentalTime::class)
   suspend fun buildClient(uri: String): RSocket {
     val setupPayload = buildSetupPayload() ?: Payload.Empty
 
@@ -194,10 +189,7 @@ class Main : Runnable {
                 if (route == "log") {
                   @Suppress("BlockingMethodInNonBlockingContext")
                   val request = moshi.adapter(LogRequest::class.java).fromJson(it.data.readText())
-                  System.err.println("Error: ${
-                    Help.Ansi.AUTO.string(
-                      " @|yellow [${request?.severity}] ${request?.message}|@")
-                  }")
+                  System.err.println("Error: ${request?.severity}] ${request?.message}")
                 } else {
                   throw RSocketError.ApplicationError("Unknown route: $route")
                 }
@@ -293,11 +285,8 @@ class Main : Runnable {
     val cacheDir = File(configDir, "cache")
 
     val logger: Logger by lazy { Logger.getLogger("main") }
-
-    @JvmStatic
-    fun main(vararg args: String) {
-      System.setProperty("io.netty.noUnsafe", "true")
-      CommandLine(Main()).execute(*args)
-    }
   }
+}
+fun main(vararg args: String) {
+  Main().main(args)
 }

@@ -1,7 +1,7 @@
 package com.baulsupp.cooee.cli.commands
 
-import com.baulsupp.cooee.cli.util.ClientException
 import com.baulsupp.cooee.cli.Main
+import com.baulsupp.cooee.cli.util.ClientException
 import com.baulsupp.cooee.cli.util.execute
 import com.baulsupp.cooee.cli.util.request
 import com.baulsupp.cooee.p.CommandRequest
