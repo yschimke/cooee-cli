@@ -7,40 +7,42 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
+import com.squareup.wire.ReverseProtoWriter
 import com.squareup.wire.Syntax.PROTO_3
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.checkElementsNotNull
-import com.squareup.wire.internal.immutableCopyOf
-import com.squareup.wire.internal.redactElements
+import com.squareup.wire.`internal`.checkElementsNotNull
+import com.squareup.wire.`internal`.immutableCopyOf
+import com.squareup.wire.`internal`.redactElements
 import kotlin.Any
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.Long
 import kotlin.String
+import kotlin.Unit
 import kotlin.collections.List
 import kotlin.jvm.JvmField
 import okio.ByteString
 
-class CompletionResponse(
+public class CompletionResponse(
   completions: List<CompletionSuggestion> = emptyList(),
-  unknownFields: ByteString = ByteString.EMPTY
+  unknownFields: ByteString = ByteString.EMPTY,
 ) : Message<CompletionResponse, CompletionResponse.Builder>(ADAPTER, unknownFields) {
   @field:WireField(
     tag = 1,
     adapter = "com.baulsupp.cooee.p.CompletionSuggestion#ADAPTER",
-    label = WireField.Label.REPEATED
+    label = WireField.Label.REPEATED,
   )
   @JvmField
-  val completions: List<CompletionSuggestion> = immutableCopyOf("completions", completions)
+  public val completions: List<CompletionSuggestion> = immutableCopyOf("completions", completions)
 
-  override fun newBuilder(): Builder {
+  public override fun newBuilder(): Builder {
     val builder = Builder()
     builder.completions = completions
     builder.addUnknownFields(unknownFields)
     return builder
   }
 
-  override fun equals(other: Any?): Boolean {
+  public override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other !is CompletionResponse) return false
     if (unknownFields != other.unknownFields) return false
@@ -48,7 +50,7 @@ class CompletionResponse(
     return true
   }
 
-  override fun hashCode(): Int {
+  public override fun hashCode(): Int {
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
@@ -58,52 +60,60 @@ class CompletionResponse(
     return result
   }
 
-  override fun toString(): String {
+  public override fun toString(): String {
     val result = mutableListOf<String>()
     if (completions.isNotEmpty()) result += """completions=$completions"""
     return result.joinToString(prefix = "CompletionResponse{", separator = ", ", postfix = "}")
   }
 
-  fun copy(completions: List<CompletionSuggestion> = this.completions, unknownFields: ByteString =
-      this.unknownFields): CompletionResponse = CompletionResponse(completions, unknownFields)
+  public fun copy(completions: List<CompletionSuggestion> = this.completions,
+      unknownFields: ByteString = this.unknownFields): CompletionResponse =
+      CompletionResponse(completions, unknownFields)
 
-  class Builder : Message.Builder<CompletionResponse, Builder>() {
+  public class Builder : Message.Builder<CompletionResponse, Builder>() {
     @JvmField
-    var completions: List<CompletionSuggestion> = emptyList()
+    public var completions: List<CompletionSuggestion> = emptyList()
 
-    fun completions(completions: List<CompletionSuggestion>): Builder {
+    public fun completions(completions: List<CompletionSuggestion>): Builder {
       checkElementsNotNull(completions)
       this.completions = completions
       return this
     }
 
-    override fun build(): CompletionResponse = CompletionResponse(
+    public override fun build(): CompletionResponse = CompletionResponse(
       completions = completions,
       unknownFields = buildUnknownFields()
     )
   }
 
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<CompletionResponse> = object : ProtoAdapter<CompletionResponse>(
+    public val ADAPTER: ProtoAdapter<CompletionResponse> = object :
+        ProtoAdapter<CompletionResponse>(
       FieldEncoding.LENGTH_DELIMITED, 
       CompletionResponse::class, 
       "type.googleapis.com/com.baulsupp.cooee.p.CompletionResponse", 
       PROTO_3, 
-      null
+      null, 
+      "api.proto"
     ) {
-      override fun encodedSize(value: CompletionResponse): Int {
+      public override fun encodedSize(`value`: CompletionResponse): Int {
         var size = value.unknownFields.size
         size += CompletionSuggestion.ADAPTER.asRepeated().encodedSizeWithTag(1, value.completions)
         return size
       }
 
-      override fun encode(writer: ProtoWriter, value: CompletionResponse) {
+      public override fun encode(writer: ProtoWriter, `value`: CompletionResponse): Unit {
         CompletionSuggestion.ADAPTER.asRepeated().encodeWithTag(writer, 1, value.completions)
         writer.writeBytes(value.unknownFields)
       }
 
-      override fun decode(reader: ProtoReader): CompletionResponse {
+      public override fun encode(writer: ReverseProtoWriter, `value`: CompletionResponse): Unit {
+        writer.writeBytes(value.unknownFields)
+        CompletionSuggestion.ADAPTER.asRepeated().encodeWithTag(writer, 1, value.completions)
+      }
+
+      public override fun decode(reader: ProtoReader): CompletionResponse {
         val completions = mutableListOf<CompletionSuggestion>()
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
@@ -117,7 +127,7 @@ class CompletionResponse(
         )
       }
 
-      override fun redact(value: CompletionResponse): CompletionResponse = value.copy(
+      public override fun redact(`value`: CompletionResponse): CompletionResponse = value.copy(
         completions = value.completions.redactElements(CompletionSuggestion.ADAPTER),
         unknownFields = ByteString.EMPTY
       )

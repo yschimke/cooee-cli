@@ -7,6 +7,7 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
+import com.squareup.wire.ReverseProtoWriter
 import com.squareup.wire.Syntax.PROTO_3
 import com.squareup.wire.WireField
 import kotlin.Any
@@ -14,50 +15,48 @@ import kotlin.Boolean
 import kotlin.Int
 import kotlin.Long
 import kotlin.String
-import kotlin.hashCode
+import kotlin.Unit
 import kotlin.jvm.JvmField
 import okio.ByteString
 
-class CommandResponse(
+public class CommandResponse(
   @field:WireField(
     tag = 1,
     adapter = "com.squareup.wire.ProtoAdapter#STRING_VALUE",
-    label = WireField.Label.OMIT_IDENTITY
   )
   @JvmField
-  val url: String? = null,
+  public val url: String? = null,
   @field:WireField(
     tag = 2,
     adapter = "com.squareup.wire.ProtoAdapter#STRING_VALUE",
-    label = WireField.Label.OMIT_IDENTITY
   )
   @JvmField
-  val message: String? = null,
+  public val message: String? = null,
   @field:WireField(
     tag = 3,
     adapter = "com.baulsupp.cooee.p.ImageUrl#ADAPTER",
     label = WireField.Label.OMIT_IDENTITY,
-    jsonName = "imageUrl"
+    jsonName = "imageUrl",
   )
   @JvmField
-  val image_url: ImageUrl? = null,
+  public val image_url: ImageUrl? = null,
   @field:WireField(
     tag = 4,
     adapter = "com.baulsupp.cooee.p.CommandStatus#ADAPTER",
-    label = WireField.Label.OMIT_IDENTITY
+    label = WireField.Label.OMIT_IDENTITY,
   )
   @JvmField
-  val status: CommandStatus = CommandStatus.UNDEFINED,
+  public val status: CommandStatus = CommandStatus.UNDEFINED,
   @field:WireField(
     tag = 5,
     adapter = "com.baulsupp.cooee.p.Table#ADAPTER",
-    label = WireField.Label.OMIT_IDENTITY
+    label = WireField.Label.OMIT_IDENTITY,
   )
   @JvmField
-  val table: Table? = null,
-  unknownFields: ByteString = ByteString.EMPTY
+  public val table: Table? = null,
+  unknownFields: ByteString = ByteString.EMPTY,
 ) : Message<CommandResponse, CommandResponse.Builder>(ADAPTER, unknownFields) {
-  override fun newBuilder(): Builder {
+  public override fun newBuilder(): Builder {
     val builder = Builder()
     builder.url = url
     builder.message = message
@@ -68,7 +67,7 @@ class CommandResponse(
     return builder
   }
 
-  override fun equals(other: Any?): Boolean {
+  public override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other !is CommandResponse) return false
     if (unknownFields != other.unknownFields) return false
@@ -80,21 +79,21 @@ class CommandResponse(
     return true
   }
 
-  override fun hashCode(): Int {
+  public override fun hashCode(): Int {
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
-      result = result * 37 + url.hashCode()
-      result = result * 37 + message.hashCode()
-      result = result * 37 + image_url.hashCode()
+      result = result * 37 + (url?.hashCode() ?: 0)
+      result = result * 37 + (message?.hashCode() ?: 0)
+      result = result * 37 + (image_url?.hashCode() ?: 0)
       result = result * 37 + status.hashCode()
-      result = result * 37 + table.hashCode()
+      result = result * 37 + (table?.hashCode() ?: 0)
       super.hashCode = result
     }
     return result
   }
 
-  override fun toString(): String {
+  public override fun toString(): String {
     val result = mutableListOf<String>()
     if (url != null) result += """url=$url"""
     if (message != null) result += """message=$message"""
@@ -104,57 +103,57 @@ class CommandResponse(
     return result.joinToString(prefix = "CommandResponse{", separator = ", ", postfix = "}")
   }
 
-  fun copy(
+  public fun copy(
     url: String? = this.url,
     message: String? = this.message,
     image_url: ImageUrl? = this.image_url,
     status: CommandStatus = this.status,
     table: Table? = this.table,
-    unknownFields: ByteString = this.unknownFields
+    unknownFields: ByteString = this.unknownFields,
   ): CommandResponse = CommandResponse(url, message, image_url, status, table, unknownFields)
 
-  class Builder : Message.Builder<CommandResponse, Builder>() {
+  public class Builder : Message.Builder<CommandResponse, Builder>() {
     @JvmField
-    var url: String? = null
+    public var url: String? = null
 
     @JvmField
-    var message: String? = null
+    public var message: String? = null
 
     @JvmField
-    var image_url: ImageUrl? = null
+    public var image_url: ImageUrl? = null
 
     @JvmField
-    var status: CommandStatus = CommandStatus.UNDEFINED
+    public var status: CommandStatus = CommandStatus.UNDEFINED
 
     @JvmField
-    var table: Table? = null
+    public var table: Table? = null
 
-    fun url(url: String?): Builder {
+    public fun url(url: String?): Builder {
       this.url = url
       return this
     }
 
-    fun message(message: String?): Builder {
+    public fun message(message: String?): Builder {
       this.message = message
       return this
     }
 
-    fun image_url(image_url: ImageUrl?): Builder {
+    public fun image_url(image_url: ImageUrl?): Builder {
       this.image_url = image_url
       return this
     }
 
-    fun status(status: CommandStatus): Builder {
+    public fun status(status: CommandStatus): Builder {
       this.status = status
       return this
     }
 
-    fun table(table: Table?): Builder {
+    public fun table(table: Table?): Builder {
       this.table = table
       return this
     }
 
-    override fun build(): CommandResponse = CommandResponse(
+    public override fun build(): CommandResponse = CommandResponse(
       url = url,
       message = message,
       image_url = image_url,
@@ -164,16 +163,17 @@ class CommandResponse(
     )
   }
 
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<CommandResponse> = object : ProtoAdapter<CommandResponse>(
+    public val ADAPTER: ProtoAdapter<CommandResponse> = object : ProtoAdapter<CommandResponse>(
       FieldEncoding.LENGTH_DELIMITED, 
       CommandResponse::class, 
       "type.googleapis.com/com.baulsupp.cooee.p.CommandResponse", 
       PROTO_3, 
-      null
+      null, 
+      "api.proto"
     ) {
-      override fun encodedSize(value: CommandResponse): Int {
+      public override fun encodedSize(`value`: CommandResponse): Int {
         var size = value.unknownFields.size
         if (value.url != null) size += ProtoAdapter.STRING_VALUE.encodedSizeWithTag(1, value.url)
         if (value.message != null) size += ProtoAdapter.STRING_VALUE.encodedSizeWithTag(2,
@@ -185,7 +185,7 @@ class CommandResponse(
         return size
       }
 
-      override fun encode(writer: ProtoWriter, value: CommandResponse) {
+      public override fun encode(writer: ProtoWriter, `value`: CommandResponse): Unit {
         if (value.url != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 1, value.url)
         if (value.message != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 2, value.message)
         if (value.image_url != null) ImageUrl.ADAPTER.encodeWithTag(writer, 3, value.image_url)
@@ -195,7 +195,17 @@ class CommandResponse(
         writer.writeBytes(value.unknownFields)
       }
 
-      override fun decode(reader: ProtoReader): CommandResponse {
+      public override fun encode(writer: ReverseProtoWriter, `value`: CommandResponse): Unit {
+        writer.writeBytes(value.unknownFields)
+        if (value.table != null) Table.ADAPTER.encodeWithTag(writer, 5, value.table)
+        if (value.status != CommandStatus.UNDEFINED) CommandStatus.ADAPTER.encodeWithTag(writer, 4,
+            value.status)
+        if (value.image_url != null) ImageUrl.ADAPTER.encodeWithTag(writer, 3, value.image_url)
+        if (value.message != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 2, value.message)
+        if (value.url != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 1, value.url)
+      }
+
+      public override fun decode(reader: ProtoReader): CommandResponse {
         var url: String? = null
         var message: String? = null
         var image_url: ImageUrl? = null
@@ -225,7 +235,7 @@ class CommandResponse(
         )
       }
 
-      override fun redact(value: CommandResponse): CommandResponse = value.copy(
+      public override fun redact(`value`: CommandResponse): CommandResponse = value.copy(
         url = value.url?.let(ProtoAdapter.STRING_VALUE::redact),
         message = value.message?.let(ProtoAdapter.STRING_VALUE::redact),
         image_url = value.image_url?.let(ImageUrl.ADAPTER::redact),

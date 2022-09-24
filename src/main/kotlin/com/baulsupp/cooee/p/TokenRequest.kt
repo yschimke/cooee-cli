@@ -7,52 +7,50 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
+import com.squareup.wire.ReverseProtoWriter
 import com.squareup.wire.Syntax.PROTO_3
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.sanitize
+import com.squareup.wire.`internal`.sanitize
 import kotlin.Any
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.Long
 import kotlin.String
-import kotlin.hashCode
+import kotlin.Unit
 import kotlin.jvm.JvmField
 import okio.ByteString
 
-class TokenRequest(
+public class TokenRequest(
   @field:WireField(
     tag = 1,
     adapter = "com.squareup.wire.ProtoAdapter#STRING",
-    label = WireField.Label.OMIT_IDENTITY
+    label = WireField.Label.OMIT_IDENTITY,
   )
   @JvmField
-  val service: String = "",
+  public val service: String = "",
   @field:WireField(
     tag = 2,
     adapter = "com.squareup.wire.ProtoAdapter#STRING_VALUE",
-    label = WireField.Label.OMIT_IDENTITY,
-    jsonName = "tokenSet"
+    jsonName = "tokenSet",
   )
   @JvmField
-  val token_set: String? = null,
+  public val token_set: String? = null,
   @field:WireField(
     tag = 3,
     adapter = "com.squareup.wire.ProtoAdapter#STRING_VALUE",
-    label = WireField.Label.OMIT_IDENTITY,
-    jsonName = "loginUrl"
+    jsonName = "loginUrl",
   )
   @JvmField
-  val login_url: String? = null,
+  public val login_url: String? = null,
   @field:WireField(
     tag = 4,
     adapter = "com.squareup.wire.ProtoAdapter#STRING_VALUE",
-    label = WireField.Label.OMIT_IDENTITY
   )
   @JvmField
-  val token: String? = null,
-  unknownFields: ByteString = ByteString.EMPTY
+  public val token: String? = null,
+  unknownFields: ByteString = ByteString.EMPTY,
 ) : Message<TokenRequest, TokenRequest.Builder>(ADAPTER, unknownFields) {
-  override fun newBuilder(): Builder {
+  public override fun newBuilder(): Builder {
     val builder = Builder()
     builder.service = service
     builder.token_set = token_set
@@ -62,7 +60,7 @@ class TokenRequest(
     return builder
   }
 
-  override fun equals(other: Any?): Boolean {
+  public override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other !is TokenRequest) return false
     if (unknownFields != other.unknownFields) return false
@@ -73,20 +71,20 @@ class TokenRequest(
     return true
   }
 
-  override fun hashCode(): Int {
+  public override fun hashCode(): Int {
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
       result = result * 37 + service.hashCode()
-      result = result * 37 + token_set.hashCode()
-      result = result * 37 + login_url.hashCode()
-      result = result * 37 + token.hashCode()
+      result = result * 37 + (token_set?.hashCode() ?: 0)
+      result = result * 37 + (login_url?.hashCode() ?: 0)
+      result = result * 37 + (token?.hashCode() ?: 0)
       super.hashCode = result
     }
     return result
   }
 
-  override fun toString(): String {
+  public override fun toString(): String {
     val result = mutableListOf<String>()
     result += """service=${sanitize(service)}"""
     if (token_set != null) result += """token_set=$token_set"""
@@ -95,48 +93,48 @@ class TokenRequest(
     return result.joinToString(prefix = "TokenRequest{", separator = ", ", postfix = "}")
   }
 
-  fun copy(
+  public fun copy(
     service: String = this.service,
     token_set: String? = this.token_set,
     login_url: String? = this.login_url,
     token: String? = this.token,
-    unknownFields: ByteString = this.unknownFields
+    unknownFields: ByteString = this.unknownFields,
   ): TokenRequest = TokenRequest(service, token_set, login_url, token, unknownFields)
 
-  class Builder : Message.Builder<TokenRequest, Builder>() {
+  public class Builder : Message.Builder<TokenRequest, Builder>() {
     @JvmField
-    var service: String = ""
+    public var service: String = ""
 
     @JvmField
-    var token_set: String? = null
+    public var token_set: String? = null
 
     @JvmField
-    var login_url: String? = null
+    public var login_url: String? = null
 
     @JvmField
-    var token: String? = null
+    public var token: String? = null
 
-    fun service(service: String): Builder {
+    public fun service(service: String): Builder {
       this.service = service
       return this
     }
 
-    fun token_set(token_set: String?): Builder {
+    public fun token_set(token_set: String?): Builder {
       this.token_set = token_set
       return this
     }
 
-    fun login_url(login_url: String?): Builder {
+    public fun login_url(login_url: String?): Builder {
       this.login_url = login_url
       return this
     }
 
-    fun token(token: String?): Builder {
+    public fun token(token: String?): Builder {
       this.token = token
       return this
     }
 
-    override fun build(): TokenRequest = TokenRequest(
+    public override fun build(): TokenRequest = TokenRequest(
       service = service,
       token_set = token_set,
       login_url = login_url,
@@ -145,16 +143,17 @@ class TokenRequest(
     )
   }
 
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<TokenRequest> = object : ProtoAdapter<TokenRequest>(
+    public val ADAPTER: ProtoAdapter<TokenRequest> = object : ProtoAdapter<TokenRequest>(
       FieldEncoding.LENGTH_DELIMITED, 
       TokenRequest::class, 
       "type.googleapis.com/com.baulsupp.cooee.p.TokenRequest", 
       PROTO_3, 
-      null
+      null, 
+      "api.proto"
     ) {
-      override fun encodedSize(value: TokenRequest): Int {
+      public override fun encodedSize(`value`: TokenRequest): Int {
         var size = value.unknownFields.size
         if (value.service != "") size += ProtoAdapter.STRING.encodedSizeWithTag(1, value.service)
         if (value.token_set != null) size += ProtoAdapter.STRING_VALUE.encodedSizeWithTag(2,
@@ -166,7 +165,7 @@ class TokenRequest(
         return size
       }
 
-      override fun encode(writer: ProtoWriter, value: TokenRequest) {
+      public override fun encode(writer: ProtoWriter, `value`: TokenRequest): Unit {
         if (value.service != "") ProtoAdapter.STRING.encodeWithTag(writer, 1, value.service)
         if (value.token_set != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 2,
             value.token_set)
@@ -176,7 +175,17 @@ class TokenRequest(
         writer.writeBytes(value.unknownFields)
       }
 
-      override fun decode(reader: ProtoReader): TokenRequest {
+      public override fun encode(writer: ReverseProtoWriter, `value`: TokenRequest): Unit {
+        writer.writeBytes(value.unknownFields)
+        if (value.token != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 4, value.token)
+        if (value.login_url != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 3,
+            value.login_url)
+        if (value.token_set != null) ProtoAdapter.STRING_VALUE.encodeWithTag(writer, 2,
+            value.token_set)
+        if (value.service != "") ProtoAdapter.STRING.encodeWithTag(writer, 1, value.service)
+      }
+
+      public override fun decode(reader: ProtoReader): TokenRequest {
         var service: String = ""
         var token_set: String? = null
         var login_url: String? = null
@@ -199,7 +208,7 @@ class TokenRequest(
         )
       }
 
-      override fun redact(value: TokenRequest): TokenRequest = value.copy(
+      public override fun redact(`value`: TokenRequest): TokenRequest = value.copy(
         token_set = value.token_set?.let(ProtoAdapter.STRING_VALUE::redact),
         login_url = value.login_url?.let(ProtoAdapter.STRING_VALUE::redact),
         token = value.token?.let(ProtoAdapter.STRING_VALUE::redact),

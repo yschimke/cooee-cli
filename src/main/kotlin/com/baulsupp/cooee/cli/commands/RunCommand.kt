@@ -8,11 +8,10 @@ import com.baulsupp.cooee.p.CommandRequest
 import com.baulsupp.cooee.p.CommandResponse
 import com.baulsupp.cooee.p.CommandStatus
 import com.baulsupp.cooee.p.Table
-import com.baulsupp.oksocial.output.UsageException
 import com.baulsupp.okurl.authenticator.oauth2.Oauth2Token
 import com.baulsupp.okurl.credentials.TokenValue
+import com.baulsupp.schoutput.UsageException
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import okhttp3.Response
 
 @OptIn(ExperimentalCoroutinesApi::class)

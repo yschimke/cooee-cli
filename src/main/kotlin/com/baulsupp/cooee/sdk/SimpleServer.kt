@@ -16,17 +16,17 @@ import com.baulsupp.cooee.p.RegisterServerRequest
 import com.baulsupp.cooee.p.RegisterServerResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.features.websocket.WebSockets
-import io.ktor.util.KtorExperimentalAPI
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.utils.io.core.ByteReadPacket
 import io.rsocket.kotlin.ExperimentalMetadataApi
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.RSocketError
 import io.rsocket.kotlin.RSocketRequestHandler
-import io.rsocket.kotlin.cancelAndJoin
 import io.rsocket.kotlin.core.RSocketConnector
 import io.rsocket.kotlin.keepalive.KeepAlive
-import io.rsocket.kotlin.logging.DefaultLoggerFactory
+import io.rsocket.kotlin.ktor.client.RSocketSupport
+import io.rsocket.kotlin.ktor.client.rSocket
+import io.rsocket.kotlin.logging.JavaLogger
 import io.rsocket.kotlin.logging.NoopLogger
 import io.rsocket.kotlin.metadata.CompositeMetadata
 import io.rsocket.kotlin.metadata.RoutingMetadata
@@ -36,8 +36,7 @@ import io.rsocket.kotlin.payload.Payload
 import io.rsocket.kotlin.payload.PayloadMimeType
 import io.rsocket.kotlin.payload.buildPayload
 import io.rsocket.kotlin.payload.data
-import io.rsocket.kotlin.transport.ktor.client.RSocketSupport
-import io.rsocket.kotlin.transport.ktor.client.rSocket
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -136,17 +135,17 @@ class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
     return this.javaClass.`package`.implementationVersion ?: "dev"
   }
 
-  @OptIn(ExperimentalTime::class, KtorExperimentalAPI::class)
+  @OptIn(ExperimentalTime::class)
   suspend fun buildClient(uri: String): RSocket {
     val client = HttpClient(OkHttp) {
       engine {
         preconfigured = client
       }
 
-      install(WebSockets)
+      WebSockets {  }
       install(RSocketSupport) {
         connector = RSocketConnector {
-          loggerFactory = if (debug) DefaultLoggerFactory else NoopLogger
+          loggerFactory = if (debug) JavaLogger else NoopLogger
 
           connectionConfig {
             setupPayload { buildSetupPayload() }
@@ -220,7 +219,7 @@ class SimpleServer(val debug: Boolean = false, val local: Boolean = false) {
 
     return client.rSocket(uri, secure = uri.startsWith("wss")).also { rsocket ->
       closeables.add(0) {
-        rsocket.cancelAndJoin()
+        rsocket.cancel()
         client.close()
       }
     }

@@ -10,48 +10,44 @@ import kotlin.Int
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 
-enum class SuggestionType(
-  override val value: Int
+public enum class SuggestionType(
+  public override val `value`: Int,
 ) : WireEnum {
   UNKNOWN(0),
-
   /**
    * Returns a link to redirect (message is secondary to link)
    */
   LINK(1),
-
   /**
    * Returns a command that can be executed via a POST, with preview etc
    */
   COMMAND(2),
-
   /**
    * Returns a command prefix that allows further comment
    */
   PREFIX(3),
-
   /**
    * Returns subcommands
    */
   LIST(4),
-
   /**
    * Shows a preview or information (link is secondary to message)
    */
-  INFORMATION(5);
+  INFORMATION(5),
+  ;
 
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<SuggestionType> = object : EnumAdapter<SuggestionType>(
+    public val ADAPTER: ProtoAdapter<SuggestionType> = object : EnumAdapter<SuggestionType>(
       SuggestionType::class, 
       PROTO_3, 
       SuggestionType.UNKNOWN
     ) {
-      override fun fromValue(value: Int): SuggestionType? = SuggestionType.fromValue(value)
+      public override fun fromValue(`value`: Int): SuggestionType? = SuggestionType.fromValue(value)
     }
 
     @JvmStatic
-    fun fromValue(value: Int): SuggestionType? = when (value) {
+    public fun fromValue(`value`: Int): SuggestionType? = when (value) {
       0 -> UNKNOWN
       1 -> LINK
       2 -> COMMAND

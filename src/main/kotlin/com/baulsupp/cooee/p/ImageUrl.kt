@@ -7,36 +7,37 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
+import com.squareup.wire.ReverseProtoWriter
 import com.squareup.wire.Syntax.PROTO_3
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.sanitize
+import com.squareup.wire.`internal`.sanitize
 import kotlin.Any
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.Long
 import kotlin.String
-import kotlin.hashCode
+import kotlin.Unit
 import kotlin.jvm.JvmField
 import okio.ByteString
 
-class ImageUrl(
+public class ImageUrl(
   @field:WireField(
     tag = 1,
     adapter = "com.squareup.wire.ProtoAdapter#STRING",
-    label = WireField.Label.OMIT_IDENTITY
+    label = WireField.Label.OMIT_IDENTITY,
   )
   @JvmField
-  val url: String = "",
-  unknownFields: ByteString = ByteString.EMPTY
+  public val url: String = "",
+  unknownFields: ByteString = ByteString.EMPTY,
 ) : Message<ImageUrl, ImageUrl.Builder>(ADAPTER, unknownFields) {
-  override fun newBuilder(): Builder {
+  public override fun newBuilder(): Builder {
     val builder = Builder()
     builder.url = url
     builder.addUnknownFields(unknownFields)
     return builder
   }
 
-  override fun equals(other: Any?): Boolean {
+  public override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other !is ImageUrl) return false
     if (unknownFields != other.unknownFields) return false
@@ -44,7 +45,7 @@ class ImageUrl(
     return true
   }
 
-  override fun hashCode(): Int {
+  public override fun hashCode(): Int {
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
@@ -54,51 +55,57 @@ class ImageUrl(
     return result
   }
 
-  override fun toString(): String {
+  public override fun toString(): String {
     val result = mutableListOf<String>()
     result += """url=${sanitize(url)}"""
     return result.joinToString(prefix = "ImageUrl{", separator = ", ", postfix = "}")
   }
 
-  fun copy(url: String = this.url, unknownFields: ByteString = this.unknownFields): ImageUrl =
-      ImageUrl(url, unknownFields)
+  public fun copy(url: String = this.url, unknownFields: ByteString = this.unknownFields): ImageUrl
+      = ImageUrl(url, unknownFields)
 
-  class Builder : Message.Builder<ImageUrl, Builder>() {
+  public class Builder : Message.Builder<ImageUrl, Builder>() {
     @JvmField
-    var url: String = ""
+    public var url: String = ""
 
-    fun url(url: String): Builder {
+    public fun url(url: String): Builder {
       this.url = url
       return this
     }
 
-    override fun build(): ImageUrl = ImageUrl(
+    public override fun build(): ImageUrl = ImageUrl(
       url = url,
       unknownFields = buildUnknownFields()
     )
   }
 
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<ImageUrl> = object : ProtoAdapter<ImageUrl>(
+    public val ADAPTER: ProtoAdapter<ImageUrl> = object : ProtoAdapter<ImageUrl>(
       FieldEncoding.LENGTH_DELIMITED, 
       ImageUrl::class, 
       "type.googleapis.com/com.baulsupp.cooee.p.ImageUrl", 
       PROTO_3, 
-      null
+      null, 
+      "api.proto"
     ) {
-      override fun encodedSize(value: ImageUrl): Int {
+      public override fun encodedSize(`value`: ImageUrl): Int {
         var size = value.unknownFields.size
         if (value.url != "") size += ProtoAdapter.STRING.encodedSizeWithTag(1, value.url)
         return size
       }
 
-      override fun encode(writer: ProtoWriter, value: ImageUrl) {
+      public override fun encode(writer: ProtoWriter, `value`: ImageUrl): Unit {
         if (value.url != "") ProtoAdapter.STRING.encodeWithTag(writer, 1, value.url)
         writer.writeBytes(value.unknownFields)
       }
 
-      override fun decode(reader: ProtoReader): ImageUrl {
+      public override fun encode(writer: ReverseProtoWriter, `value`: ImageUrl): Unit {
+        writer.writeBytes(value.unknownFields)
+        if (value.url != "") ProtoAdapter.STRING.encodeWithTag(writer, 1, value.url)
+      }
+
+      public override fun decode(reader: ProtoReader): ImageUrl {
         var url: String = ""
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
@@ -112,7 +119,7 @@ class ImageUrl(
         )
       }
 
-      override fun redact(value: ImageUrl): ImageUrl = value.copy(
+      public override fun redact(`value`: ImageUrl): ImageUrl = value.copy(
         unknownFields = ByteString.EMPTY
       )
     }

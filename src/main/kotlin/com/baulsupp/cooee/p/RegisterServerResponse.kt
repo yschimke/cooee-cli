@@ -7,36 +7,37 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
+import com.squareup.wire.ReverseProtoWriter
 import com.squareup.wire.Syntax.PROTO_3
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.sanitize
+import com.squareup.wire.`internal`.sanitize
 import kotlin.Any
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.Long
 import kotlin.String
-import kotlin.hashCode
+import kotlin.Unit
 import kotlin.jvm.JvmField
 import okio.ByteString
 
-class RegisterServerResponse(
+public class RegisterServerResponse(
   @field:WireField(
     tag = 1,
     adapter = "com.squareup.wire.ProtoAdapter#STRING",
-    label = WireField.Label.OMIT_IDENTITY
+    label = WireField.Label.OMIT_IDENTITY,
   )
   @JvmField
-  val uuid: String = "",
-  unknownFields: ByteString = ByteString.EMPTY
+  public val uuid: String = "",
+  unknownFields: ByteString = ByteString.EMPTY,
 ) : Message<RegisterServerResponse, RegisterServerResponse.Builder>(ADAPTER, unknownFields) {
-  override fun newBuilder(): Builder {
+  public override fun newBuilder(): Builder {
     val builder = Builder()
     builder.uuid = uuid
     builder.addUnknownFields(unknownFields)
     return builder
   }
 
-  override fun equals(other: Any?): Boolean {
+  public override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other !is RegisterServerResponse) return false
     if (unknownFields != other.unknownFields) return false
@@ -44,7 +45,7 @@ class RegisterServerResponse(
     return true
   }
 
-  override fun hashCode(): Int {
+  public override fun hashCode(): Int {
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
@@ -54,52 +55,59 @@ class RegisterServerResponse(
     return result
   }
 
-  override fun toString(): String {
+  public override fun toString(): String {
     val result = mutableListOf<String>()
     result += """uuid=${sanitize(uuid)}"""
     return result.joinToString(prefix = "RegisterServerResponse{", separator = ", ", postfix = "}")
   }
 
-  fun copy(uuid: String = this.uuid, unknownFields: ByteString = this.unknownFields):
+  public fun copy(uuid: String = this.uuid, unknownFields: ByteString = this.unknownFields):
       RegisterServerResponse = RegisterServerResponse(uuid, unknownFields)
 
-  class Builder : Message.Builder<RegisterServerResponse, Builder>() {
+  public class Builder : Message.Builder<RegisterServerResponse, Builder>() {
     @JvmField
-    var uuid: String = ""
+    public var uuid: String = ""
 
-    fun uuid(uuid: String): Builder {
+    public fun uuid(uuid: String): Builder {
       this.uuid = uuid
       return this
     }
 
-    override fun build(): RegisterServerResponse = RegisterServerResponse(
+    public override fun build(): RegisterServerResponse = RegisterServerResponse(
       uuid = uuid,
       unknownFields = buildUnknownFields()
     )
   }
 
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<RegisterServerResponse> = object :
+    public val ADAPTER: ProtoAdapter<RegisterServerResponse> = object :
         ProtoAdapter<RegisterServerResponse>(
       FieldEncoding.LENGTH_DELIMITED, 
       RegisterServerResponse::class, 
       "type.googleapis.com/com.baulsupp.cooee.p.RegisterServerResponse", 
       PROTO_3, 
-      null
+      null, 
+      "api.proto"
     ) {
-      override fun encodedSize(value: RegisterServerResponse): Int {
+      public override fun encodedSize(`value`: RegisterServerResponse): Int {
         var size = value.unknownFields.size
         if (value.uuid != "") size += ProtoAdapter.STRING.encodedSizeWithTag(1, value.uuid)
         return size
       }
 
-      override fun encode(writer: ProtoWriter, value: RegisterServerResponse) {
+      public override fun encode(writer: ProtoWriter, `value`: RegisterServerResponse): Unit {
         if (value.uuid != "") ProtoAdapter.STRING.encodeWithTag(writer, 1, value.uuid)
         writer.writeBytes(value.unknownFields)
       }
 
-      override fun decode(reader: ProtoReader): RegisterServerResponse {
+      public override fun encode(writer: ReverseProtoWriter, `value`: RegisterServerResponse):
+          Unit {
+        writer.writeBytes(value.unknownFields)
+        if (value.uuid != "") ProtoAdapter.STRING.encodeWithTag(writer, 1, value.uuid)
+      }
+
+      public override fun decode(reader: ProtoReader): RegisterServerResponse {
         var uuid: String = ""
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
@@ -113,7 +121,8 @@ class RegisterServerResponse(
         )
       }
 
-      override fun redact(value: RegisterServerResponse): RegisterServerResponse = value.copy(
+      public override fun redact(`value`: RegisterServerResponse): RegisterServerResponse =
+          value.copy(
         unknownFields = ByteString.EMPTY
       )
     }

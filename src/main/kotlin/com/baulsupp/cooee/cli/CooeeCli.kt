@@ -13,32 +13,33 @@ import com.baulsupp.cooee.cli.util.moshi
 import com.baulsupp.cooee.p.LogRequest
 import com.baulsupp.cooee.p.TokenRequest
 import com.baulsupp.cooee.p.TokenResponse
-import com.baulsupp.oksocial.output.UsageException
-import com.baulsupp.oksocial.output.handler.ConsoleHandler
-import com.baulsupp.oksocial.output.handler.OutputHandler
 import com.baulsupp.okurl.authenticator.AuthenticatingInterceptor
 import com.baulsupp.okurl.authenticator.RenewingInterceptor
 import com.baulsupp.okurl.credentials.DefaultToken
+import com.baulsupp.okurl.services.ServiceList
+import com.baulsupp.schoutput.UsageException
+import com.baulsupp.schoutput.handler.OutputHandler
+import com.baulsupp.schoutput.outputHandlerInstance
 import io.ktor.client.*
 import io.ktor.client.engine.*
 import io.ktor.client.engine.okhttp.*
-import io.ktor.client.features.websocket.*
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.util.*
 import io.ktor.utils.io.core.*
 import io.rsocket.kotlin.ExperimentalMetadataApi
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.RSocketError
 import io.rsocket.kotlin.RSocketRequestHandler
-import io.rsocket.kotlin.cancelAndJoin
 import io.rsocket.kotlin.core.RSocketConnector
 import io.rsocket.kotlin.keepalive.KeepAlive
-import io.rsocket.kotlin.logging.DefaultLoggerFactory
+import io.rsocket.kotlin.ktor.client.RSocketSupport
+import io.rsocket.kotlin.ktor.client.rSocket
+import io.rsocket.kotlin.logging.JavaLogger
 import io.rsocket.kotlin.logging.NoopLogger
 import io.rsocket.kotlin.metadata.*
 import io.rsocket.kotlin.metadata.security.BearerAuthMetadata
 import io.rsocket.kotlin.payload.*
-import io.rsocket.kotlin.transport.ktor.client.RSocketSupport
-import io.rsocket.kotlin.transport.ktor.client.rSocket
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -89,7 +90,7 @@ class Main : Runnable {
 
   lateinit var rsocketClient: RSocket
 
-  val services = AuthenticatingInterceptor.defaultServices()
+  val services = ServiceList.defaultServices()
 
   val credentialsStore = com.baulsupp.okurl.credentials.SimpleCredentialsStore.also {
     File(System.getProperty("user.home"), ".okurl").mkdirs()
@@ -120,7 +121,7 @@ class Main : Runnable {
     System.setProperty("apple.awt.UIElement", "true")
 
     if (!this::outputHandler.isInitialized) {
-      outputHandler = ConsoleHandler.instance(OkHttpResponseExtractor)
+      outputHandler = outputHandlerInstance(OkHttpResponseExtractor)
     }
 
     if (!this::client.isInitialized) {
@@ -132,7 +133,7 @@ class Main : Runnable {
     rsocketClient = buildClient(if (local) "ws://localhost:8080/rsocket" else Preferences.local.api)
 
     closeables.add {
-      rsocketClient.cancelAndJoin()
+      rsocketClient.cancel()
     }
 
     closeables.add {
@@ -177,7 +178,7 @@ class Main : Runnable {
       install(WebSockets)
       install(RSocketSupport) {
         connector = RSocketConnector {
-          loggerFactory = if (debug) DefaultLoggerFactory else NoopLogger
+          loggerFactory = if (debug) JavaLogger else NoopLogger
 
           connectionConfig {
             setupPayload { setupPayload }
@@ -226,7 +227,7 @@ class Main : Runnable {
 
     return client.rSocket(uri, secure = uri.startsWith("wss")).also { rsocket ->
       closeables.add(0) {
-        rsocket.cancelAndJoin()
+        rsocket.cancel()
         client.close()
       }
     }

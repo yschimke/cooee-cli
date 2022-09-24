@@ -10,35 +10,30 @@ import kotlin.Int
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 
-enum class CommandStatus(
-  override val value: Int
+public enum class CommandStatus(
+  public override val `value`: Int,
 ) : WireEnum {
   UNDEFINED(0),
-
   CLIENT_ACTION(1),
-
   DONE(2),
-
   REDIRECT(3),
-
   REQUEST_ERROR(4),
-
   SERVER_ERROR(5),
+  STREAM(6),
+  ;
 
-  STREAM(6);
-
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<CommandStatus> = object : EnumAdapter<CommandStatus>(
+    public val ADAPTER: ProtoAdapter<CommandStatus> = object : EnumAdapter<CommandStatus>(
       CommandStatus::class, 
       PROTO_3, 
       CommandStatus.UNDEFINED
     ) {
-      override fun fromValue(value: Int): CommandStatus? = CommandStatus.fromValue(value)
+      public override fun fromValue(`value`: Int): CommandStatus? = CommandStatus.fromValue(value)
     }
 
     @JvmStatic
-    fun fromValue(value: Int): CommandStatus? = when (value) {
+    public fun fromValue(`value`: Int): CommandStatus? = when (value) {
       0 -> UNDEFINED
       1 -> CLIENT_ACTION
       2 -> DONE

@@ -7,40 +7,42 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
+import com.squareup.wire.ReverseProtoWriter
 import com.squareup.wire.Syntax.PROTO_3
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.checkElementsNotNull
-import com.squareup.wire.internal.immutableCopyOf
-import com.squareup.wire.internal.redactElements
+import com.squareup.wire.`internal`.checkElementsNotNull
+import com.squareup.wire.`internal`.immutableCopyOf
+import com.squareup.wire.`internal`.redactElements
 import kotlin.Any
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.Long
 import kotlin.String
+import kotlin.Unit
 import kotlin.collections.List
 import kotlin.jvm.JvmField
 import okio.ByteString
 
-class Table(
+public class Table(
   columns: List<TableColumn> = emptyList(),
-  unknownFields: ByteString = ByteString.EMPTY
+  unknownFields: ByteString = ByteString.EMPTY,
 ) : Message<Table, Table.Builder>(ADAPTER, unknownFields) {
   @field:WireField(
     tag = 1,
     adapter = "com.baulsupp.cooee.p.TableColumn#ADAPTER",
-    label = WireField.Label.REPEATED
+    label = WireField.Label.REPEATED,
   )
   @JvmField
-  val columns: List<TableColumn> = immutableCopyOf("columns", columns)
+  public val columns: List<TableColumn> = immutableCopyOf("columns", columns)
 
-  override fun newBuilder(): Builder {
+  public override fun newBuilder(): Builder {
     val builder = Builder()
     builder.columns = columns
     builder.addUnknownFields(unknownFields)
     return builder
   }
 
-  override fun equals(other: Any?): Boolean {
+  public override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other !is Table) return false
     if (unknownFields != other.unknownFields) return false
@@ -48,7 +50,7 @@ class Table(
     return true
   }
 
-  override fun hashCode(): Int {
+  public override fun hashCode(): Int {
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
@@ -58,52 +60,58 @@ class Table(
     return result
   }
 
-  override fun toString(): String {
+  public override fun toString(): String {
     val result = mutableListOf<String>()
     if (columns.isNotEmpty()) result += """columns=$columns"""
     return result.joinToString(prefix = "Table{", separator = ", ", postfix = "}")
   }
 
-  fun copy(columns: List<TableColumn> = this.columns, unknownFields: ByteString =
+  public fun copy(columns: List<TableColumn> = this.columns, unknownFields: ByteString =
       this.unknownFields): Table = Table(columns, unknownFields)
 
-  class Builder : Message.Builder<Table, Builder>() {
+  public class Builder : Message.Builder<Table, Builder>() {
     @JvmField
-    var columns: List<TableColumn> = emptyList()
+    public var columns: List<TableColumn> = emptyList()
 
-    fun columns(columns: List<TableColumn>): Builder {
+    public fun columns(columns: List<TableColumn>): Builder {
       checkElementsNotNull(columns)
       this.columns = columns
       return this
     }
 
-    override fun build(): Table = Table(
+    public override fun build(): Table = Table(
       columns = columns,
       unknownFields = buildUnknownFields()
     )
   }
 
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<Table> = object : ProtoAdapter<Table>(
+    public val ADAPTER: ProtoAdapter<Table> = object : ProtoAdapter<Table>(
       FieldEncoding.LENGTH_DELIMITED, 
       Table::class, 
       "type.googleapis.com/com.baulsupp.cooee.p.Table", 
       PROTO_3, 
-      null
+      null, 
+      "api.proto"
     ) {
-      override fun encodedSize(value: Table): Int {
+      public override fun encodedSize(`value`: Table): Int {
         var size = value.unknownFields.size
         size += TableColumn.ADAPTER.asRepeated().encodedSizeWithTag(1, value.columns)
         return size
       }
 
-      override fun encode(writer: ProtoWriter, value: Table) {
+      public override fun encode(writer: ProtoWriter, `value`: Table): Unit {
         TableColumn.ADAPTER.asRepeated().encodeWithTag(writer, 1, value.columns)
         writer.writeBytes(value.unknownFields)
       }
 
-      override fun decode(reader: ProtoReader): Table {
+      public override fun encode(writer: ReverseProtoWriter, `value`: Table): Unit {
+        writer.writeBytes(value.unknownFields)
+        TableColumn.ADAPTER.asRepeated().encodeWithTag(writer, 1, value.columns)
+      }
+
+      public override fun decode(reader: ProtoReader): Table {
         val columns = mutableListOf<TableColumn>()
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
@@ -117,7 +125,7 @@ class Table(
         )
       }
 
-      override fun redact(value: Table): Table = value.copy(
+      public override fun redact(`value`: Table): Table = value.copy(
         columns = value.columns.redactElements(TableColumn.ADAPTER),
         unknownFields = ByteString.EMPTY
       )

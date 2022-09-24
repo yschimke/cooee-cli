@@ -10,27 +10,26 @@ import kotlin.Int
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 
-enum class ResponseType(
-  override val value: Int
+public enum class ResponseType(
+  public override val `value`: Int,
 ) : WireEnum {
   DEFAULT_RESPONSE(0),
-
   REQUEST_RESPONSE(1),
+  STREAM_RESPONSE(2),
+  ;
 
-  STREAM_RESPONSE(2);
-
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<ResponseType> = object : EnumAdapter<ResponseType>(
+    public val ADAPTER: ProtoAdapter<ResponseType> = object : EnumAdapter<ResponseType>(
       ResponseType::class, 
       PROTO_3, 
       ResponseType.DEFAULT_RESPONSE
     ) {
-      override fun fromValue(value: Int): ResponseType? = ResponseType.fromValue(value)
+      public override fun fromValue(`value`: Int): ResponseType? = ResponseType.fromValue(value)
     }
 
     @JvmStatic
-    fun fromValue(value: Int): ResponseType? = when (value) {
+    public fun fromValue(`value`: Int): ResponseType? = when (value) {
       0 -> DEFAULT_RESPONSE
       1 -> REQUEST_RESPONSE
       2 -> STREAM_RESPONSE

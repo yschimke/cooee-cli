@@ -104,6 +104,7 @@ dependencies {
   implementation("io.ktor:ktor-client-core-jvm:2.1.1") {
     exclude(group= "com.squareup.okhttp3")
   }
+  implementation("io.rsocket.kotlin:rsocket-ktor-client:0.15.4")
 
   implementation("com.squareup.wire:wire-runtime:4.4.1")
   implementation("com.squareup.wire:wire-moshi-adapter:4.4.1")

@@ -2,7 +2,7 @@ package com.baulsupp.cooee.sdk
 
 import com.baulsupp.cooee.cli.Main
 import com.baulsupp.cooee.cli.util.LoggingUtil
-import com.baulsupp.oksocial.output.UsageException
+import com.baulsupp.schoutput.UsageException
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 

@@ -7,6 +7,7 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
+import com.squareup.wire.ReverseProtoWriter
 import com.squareup.wire.Syntax.PROTO_3
 import com.squareup.wire.WireField
 import kotlin.Any
@@ -14,29 +15,29 @@ import kotlin.Boolean
 import kotlin.Int
 import kotlin.Long
 import kotlin.String
-import kotlin.hashCode
+import kotlin.Unit
 import kotlin.jvm.JvmField
 import okio.ByteString
 
-class TokenResponse(
+public class TokenResponse(
   @field:WireField(
     tag = 1,
     adapter = "com.baulsupp.cooee.p.TokenUpdate#ADAPTER",
-    label = WireField.Label.OMIT_IDENTITY
+    label = WireField.Label.OMIT_IDENTITY,
   )
   @JvmField
-  val token: TokenUpdate? = null,
+  public val token: TokenUpdate? = null,
   @field:WireField(
     tag = 2,
     adapter = "com.squareup.wire.ProtoAdapter#BOOL",
     label = WireField.Label.OMIT_IDENTITY,
-    jsonName = "loginAttempted"
+    jsonName = "loginAttempted",
   )
   @JvmField
-  val login_attempted: Boolean = false,
-  unknownFields: ByteString = ByteString.EMPTY
+  public val login_attempted: Boolean = false,
+  unknownFields: ByteString = ByteString.EMPTY,
 ) : Message<TokenResponse, TokenResponse.Builder>(ADAPTER, unknownFields) {
-  override fun newBuilder(): Builder {
+  public override fun newBuilder(): Builder {
     val builder = Builder()
     builder.token = token
     builder.login_attempted = login_attempted
@@ -44,7 +45,7 @@ class TokenResponse(
     return builder
   }
 
-  override fun equals(other: Any?): Boolean {
+  public override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other !is TokenResponse) return false
     if (unknownFields != other.unknownFields) return false
@@ -53,64 +54,65 @@ class TokenResponse(
     return true
   }
 
-  override fun hashCode(): Int {
+  public override fun hashCode(): Int {
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
-      result = result * 37 + token.hashCode()
+      result = result * 37 + (token?.hashCode() ?: 0)
       result = result * 37 + login_attempted.hashCode()
       super.hashCode = result
     }
     return result
   }
 
-  override fun toString(): String {
+  public override fun toString(): String {
     val result = mutableListOf<String>()
     if (token != null) result += """token=$token"""
     result += """login_attempted=$login_attempted"""
     return result.joinToString(prefix = "TokenResponse{", separator = ", ", postfix = "}")
   }
 
-  fun copy(
+  public fun copy(
     token: TokenUpdate? = this.token,
     login_attempted: Boolean = this.login_attempted,
-    unknownFields: ByteString = this.unknownFields
+    unknownFields: ByteString = this.unknownFields,
   ): TokenResponse = TokenResponse(token, login_attempted, unknownFields)
 
-  class Builder : Message.Builder<TokenResponse, Builder>() {
+  public class Builder : Message.Builder<TokenResponse, Builder>() {
     @JvmField
-    var token: TokenUpdate? = null
+    public var token: TokenUpdate? = null
 
     @JvmField
-    var login_attempted: Boolean = false
+    public var login_attempted: Boolean = false
 
-    fun token(token: TokenUpdate?): Builder {
+    public fun token(token: TokenUpdate?): Builder {
       this.token = token
       return this
     }
 
-    fun login_attempted(login_attempted: Boolean): Builder {
+    public fun login_attempted(login_attempted: Boolean): Builder {
       this.login_attempted = login_attempted
       return this
     }
 
-    override fun build(): TokenResponse = TokenResponse(
+    public override fun build(): TokenResponse = TokenResponse(
       token = token,
       login_attempted = login_attempted,
       unknownFields = buildUnknownFields()
     )
   }
 
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<TokenResponse> = object : ProtoAdapter<TokenResponse>(
+    public val ADAPTER: ProtoAdapter<TokenResponse> = object : ProtoAdapter<TokenResponse>(
       FieldEncoding.LENGTH_DELIMITED, 
       TokenResponse::class, 
       "type.googleapis.com/com.baulsupp.cooee.p.TokenResponse", 
       PROTO_3, 
-      null
+      null, 
+      "api.proto"
     ) {
-      override fun encodedSize(value: TokenResponse): Int {
+      public override fun encodedSize(`value`: TokenResponse): Int {
         var size = value.unknownFields.size
         if (value.token != null) size += TokenUpdate.ADAPTER.encodedSizeWithTag(1, value.token)
         if (value.login_attempted != false) size += ProtoAdapter.BOOL.encodedSizeWithTag(2,
@@ -118,14 +120,21 @@ class TokenResponse(
         return size
       }
 
-      override fun encode(writer: ProtoWriter, value: TokenResponse) {
+      public override fun encode(writer: ProtoWriter, `value`: TokenResponse): Unit {
         if (value.token != null) TokenUpdate.ADAPTER.encodeWithTag(writer, 1, value.token)
         if (value.login_attempted != false) ProtoAdapter.BOOL.encodeWithTag(writer, 2,
             value.login_attempted)
         writer.writeBytes(value.unknownFields)
       }
 
-      override fun decode(reader: ProtoReader): TokenResponse {
+      public override fun encode(writer: ReverseProtoWriter, `value`: TokenResponse): Unit {
+        writer.writeBytes(value.unknownFields)
+        if (value.login_attempted != false) ProtoAdapter.BOOL.encodeWithTag(writer, 2,
+            value.login_attempted)
+        if (value.token != null) TokenUpdate.ADAPTER.encodeWithTag(writer, 1, value.token)
+      }
+
+      public override fun decode(reader: ProtoReader): TokenResponse {
         var token: TokenUpdate? = null
         var login_attempted: Boolean = false
         val unknownFields = reader.forEachTag { tag ->
@@ -142,7 +151,7 @@ class TokenResponse(
         )
       }
 
-      override fun redact(value: TokenResponse): TokenResponse = value.copy(
+      public override fun redact(`value`: TokenResponse): TokenResponse = value.copy(
         token = value.token?.let(TokenUpdate.ADAPTER::redact),
         unknownFields = ByteString.EMPTY
       )

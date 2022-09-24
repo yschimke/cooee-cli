@@ -7,36 +7,37 @@ import com.squareup.wire.Message
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoReader
 import com.squareup.wire.ProtoWriter
+import com.squareup.wire.ReverseProtoWriter
 import com.squareup.wire.Syntax.PROTO_3
 import com.squareup.wire.WireField
-import com.squareup.wire.internal.sanitize
+import com.squareup.wire.`internal`.sanitize
 import kotlin.Any
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.Long
 import kotlin.String
-import kotlin.hashCode
+import kotlin.Unit
 import kotlin.jvm.JvmField
 import okio.ByteString
 
-class CompletionRequest(
+public class CompletionRequest(
   @field:WireField(
     tag = 2,
     adapter = "com.squareup.wire.ProtoAdapter#STRING",
-    label = WireField.Label.OMIT_IDENTITY
+    label = WireField.Label.OMIT_IDENTITY,
   )
   @JvmField
-  val line: String = "",
-  unknownFields: ByteString = ByteString.EMPTY
+  public val line: String = "",
+  unknownFields: ByteString = ByteString.EMPTY,
 ) : Message<CompletionRequest, CompletionRequest.Builder>(ADAPTER, unknownFields) {
-  override fun newBuilder(): Builder {
+  public override fun newBuilder(): Builder {
     val builder = Builder()
     builder.line = line
     builder.addUnknownFields(unknownFields)
     return builder
   }
 
-  override fun equals(other: Any?): Boolean {
+  public override fun equals(other: Any?): Boolean {
     if (other === this) return true
     if (other !is CompletionRequest) return false
     if (unknownFields != other.unknownFields) return false
@@ -44,7 +45,7 @@ class CompletionRequest(
     return true
   }
 
-  override fun hashCode(): Int {
+  public override fun hashCode(): Int {
     var result = super.hashCode
     if (result == 0) {
       result = unknownFields.hashCode()
@@ -54,51 +55,57 @@ class CompletionRequest(
     return result
   }
 
-  override fun toString(): String {
+  public override fun toString(): String {
     val result = mutableListOf<String>()
     result += """line=${sanitize(line)}"""
     return result.joinToString(prefix = "CompletionRequest{", separator = ", ", postfix = "}")
   }
 
-  fun copy(line: String = this.line, unknownFields: ByteString = this.unknownFields):
+  public fun copy(line: String = this.line, unknownFields: ByteString = this.unknownFields):
       CompletionRequest = CompletionRequest(line, unknownFields)
 
-  class Builder : Message.Builder<CompletionRequest, Builder>() {
+  public class Builder : Message.Builder<CompletionRequest, Builder>() {
     @JvmField
-    var line: String = ""
+    public var line: String = ""
 
-    fun line(line: String): Builder {
+    public fun line(line: String): Builder {
       this.line = line
       return this
     }
 
-    override fun build(): CompletionRequest = CompletionRequest(
+    public override fun build(): CompletionRequest = CompletionRequest(
       line = line,
       unknownFields = buildUnknownFields()
     )
   }
 
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<CompletionRequest> = object : ProtoAdapter<CompletionRequest>(
+    public val ADAPTER: ProtoAdapter<CompletionRequest> = object : ProtoAdapter<CompletionRequest>(
       FieldEncoding.LENGTH_DELIMITED, 
       CompletionRequest::class, 
       "type.googleapis.com/com.baulsupp.cooee.p.CompletionRequest", 
       PROTO_3, 
-      null
+      null, 
+      "api.proto"
     ) {
-      override fun encodedSize(value: CompletionRequest): Int {
+      public override fun encodedSize(`value`: CompletionRequest): Int {
         var size = value.unknownFields.size
         if (value.line != "") size += ProtoAdapter.STRING.encodedSizeWithTag(2, value.line)
         return size
       }
 
-      override fun encode(writer: ProtoWriter, value: CompletionRequest) {
+      public override fun encode(writer: ProtoWriter, `value`: CompletionRequest): Unit {
         if (value.line != "") ProtoAdapter.STRING.encodeWithTag(writer, 2, value.line)
         writer.writeBytes(value.unknownFields)
       }
 
-      override fun decode(reader: ProtoReader): CompletionRequest {
+      public override fun encode(writer: ReverseProtoWriter, `value`: CompletionRequest): Unit {
+        writer.writeBytes(value.unknownFields)
+        if (value.line != "") ProtoAdapter.STRING.encodeWithTag(writer, 2, value.line)
+      }
+
+      public override fun decode(reader: ProtoReader): CompletionRequest {
         var line: String = ""
         val unknownFields = reader.forEachTag { tag ->
           when (tag) {
@@ -112,7 +119,7 @@ class CompletionRequest(
         )
       }
 
-      override fun redact(value: CompletionRequest): CompletionRequest = value.copy(
+      public override fun redact(`value`: CompletionRequest): CompletionRequest = value.copy(
         unknownFields = ByteString.EMPTY
       )
     }

@@ -10,31 +10,28 @@ import kotlin.Int
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 
-enum class LogSeverity(
-  override val value: Int
+public enum class LogSeverity(
+  public override val `value`: Int,
 ) : WireEnum {
   FATAL(0),
-
   SEVERE(1),
-
   INFO(2),
-
   WARN(3),
+  TRACE(4),
+  ;
 
-  TRACE(4);
-
-  companion object {
+  public companion object {
     @JvmField
-    val ADAPTER: ProtoAdapter<LogSeverity> = object : EnumAdapter<LogSeverity>(
+    public val ADAPTER: ProtoAdapter<LogSeverity> = object : EnumAdapter<LogSeverity>(
       LogSeverity::class, 
       PROTO_3, 
       LogSeverity.FATAL
     ) {
-      override fun fromValue(value: Int): LogSeverity? = LogSeverity.fromValue(value)
+      public override fun fromValue(`value`: Int): LogSeverity? = LogSeverity.fromValue(value)
     }
 
     @JvmStatic
-    fun fromValue(value: Int): LogSeverity? = when (value) {
+    public fun fromValue(`value`: Int): LogSeverity? = when (value) {
       0 -> FATAL
       1 -> SEVERE
       2 -> INFO
